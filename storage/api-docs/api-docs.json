@@ -1,0 +1,3127 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "User Service API",
+        "description": "API de gestion des utilisateurs",
+        "contact": {
+            "email": "n.taffot@elyft.tech"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8001",
+            "description": "User Service Server"
+        }
+    ],
+    "paths": {
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Créer un nouvel utilisateur",
+                "description": "Crée un utilisateur avec les informations fournies (JSON ou form-data).",
+                "operationId": "8a56853624e025573120a09a4c75d468",
+                "requestBody": {
+                    "description": "Données en JSON ou formulaire",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "telephone",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "nath"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "nath@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "677852729"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "motdepasse123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "super_admin",
+                                            "admin_entreprise",
+                                            "operateur_entreprise",
+                                            "consultant_entreprise"
+                                        ],
+                                        "example": "admin_entreprise"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "telephone",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "nath"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "nath@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "677852729"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "motdepasse123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "super_admin",
+                                            "admin_entreprise",
+                                            "operateur_entreprise",
+                                            "consultant_entreprise"
+                                        ],
+                                        "example": "admin_entreprise"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur créé avec succès.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 201
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur enregistré avec succès."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données envoyées ne sont pas valides."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne du serveur.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur s’est produite."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion utilisateur",
+                "description": "Permet à un utilisateur de se connecter avec son email et son mot de passe.",
+                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "motdepasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "motdepasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Connexion réussie."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGci..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Échec d’authentification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Identifiants incorrects."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les champs email et mot de passe sont requis."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne du serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue sur le serveur."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/token/users": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Profil de l'utilisateur connecté",
+                "description": "Retourne les informations de l'utilisateur authentifié à partir du token.",
+                "operationId": "e0c3e773f4f0215b0007611ec0ae09d3",
+                "responses": {
+                    "200": {
+                        "description": "Données de l'utilisateur récupérées avec succès.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur connecté récupéré."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "84d8c8e2-dea9-4381-bcc8-8d0ecd24eb2b"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "nath"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "floretaffot1@gmail.com"
+                                                },
+                                                "telephone": {
+                                                    "type": "string",
+                                                    "example": "677852729"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "super_admin"
+                                                },
+                                                "permissions": {
+                                                    "type": "string",
+                                                    "example": "all_permissions"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "actif"
+                                                },
+                                                "langue_preferee": {
+                                                    "type": "string",
+                                                    "example": "fr"
+                                                },
+                                                "preferences_notifications": {
+                                                    "type": "string",
+                                                    "example": "notifications"
+                                                },
+                                                "photo_profil_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/image.jpg",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-06-26T16:32:11.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-07-01T09:46:59.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Déconnexion",
+                "description": "Déconnecte l'utilisateur et invalide son token d'authentification.",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Déconnexion réussie."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue lors de la déconnexion."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/verify_code": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Vérifier le code de confirmation",
+                "description": "Vérifie le code de vérification envoyé à l'adresse email de l'utilisateur et active son compte.",
+                "operationId": "6b62f44eede6891076a8e30a293d4f86",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@example.com"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte vérifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte verifier avec succes"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJK..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "user_id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "example": "84d8c8e2-dea9-4381-bcc8-8d0ecd24eb2b"
+                                        },
+                                        "user_name": {
+                                            "type": "string",
+                                            "example": "nath"
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "example": "super_admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Code invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_VERIFICATION_CODE"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "code de verification invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L’email et le code sont obligatoires."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/password/update": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Met à jour le mot de passe d'un utilisateur",
+                "description": "Permet de réinitialiser le mot de passe d'un utilisateur via son email.",
+                "operationId": "645c144c9243737aaaac829ec9b5d2bf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "Adresse email de l'utilisateur",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Nouveau mot de passe (min 8 caractères)",
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "newpassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "statut": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your password has been reset."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nous ne pouvons pas trouver d'utilisateur avec cette adresse e-mail."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "USER_NOT_FOUND"
+                                        },
+                                        "statut": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "email": [
+                                                    "The email field is required."
+                                                ],
+                                                "password": [
+                                                    "The password must be at least 8 characters."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/change_password": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Change le mot de passe de l'utilisateur connecté",
+                "description": "Permet à un utilisateur authentifié de changer son mot de passe en fournissant l'ancien et le nouveau mot de passe.",
+                "operationId": "85392cef50f3dd16693cca389f6a09b4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "old_password",
+                                    "new_password"
+                                ],
+                                "properties": {
+                                    "old_password": {
+                                        "description": "L'ancien mot de passe",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "oldpass123"
+                                    },
+                                    "new_password": {
+                                        "description": "Le nouveau mot de passe (min 8 caractères)",
+                                        "type": "string",
+                                        "format": "password",
+                                        "minLength": 8,
+                                        "example": "newpass1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe changé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "statut": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PASS_CHANGED_SUCCESS"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Votre mot de passe a été changé avec succès."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Ancien mot de passe incorrect ou utilisateur non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "statut": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L'ancien mot de passe est incorrect."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PASS_CHANGED_FAILED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation des données",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "old_password": [
+                                                    "The old password field is required."
+                                                ],
+                                                "new_password": [
+                                                    "The new password must be at least 8 characters."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/permissions/assign": {
+            "post": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Assigner des permissions à un utilisateur d'entreprise",
+                "operationId": "assignPermissions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "user_email",
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "user_email": {
+                                        "description": "Email de l'utilisateur à qui on assigne les permissions",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@entreprise.com"
+                                    },
+                                    "permissions": {
+                                        "description": "Permission à assigner (séparées par des virgules si multiples)",
+                                        "type": "string",
+                                        "enum": [
+                                            "can_create_transaction",
+                                            "can_view_reports",
+                                            "all_permissions"
+                                        ],
+                                        "example": "voir_transactions,modifier_profil"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permissions assignées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permissions assignées avec succès"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSIONS_ASSIGNED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Aucune permission n'a été assignée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucune permission n'a été assignée"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NO_PERMISSIONS_ASSIGNED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Erreur lors de l'assignation des permissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Exception message ici"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSIONS_ASSIGNMENT_FAILED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/permissions/revoke": {
+            "post": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Révoquer des permissions à un utilisateur d'entreprise",
+                "operationId": "revokePermissions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "user_email",
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "user_email": {
+                                        "description": "Email de l'utilisateur dont on souhaite retirer des permissions",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@entreprise.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permissions révoquées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permissions révoquées avec succès"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSIONS_REVOKED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Aucune permission n'a été révoquée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucune permission n'a été révoquée"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NO_PERMISSIONS_REVOKED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Erreur lors de la révocation des permissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Exception message ici"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSIONS_REVOKE_FAILED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/enterprise_users": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Lister les utilisateurs d'une entreprise avec leurs permissions",
+                "operationId": "listEnterpriseUsers",
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Jean Dupont"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "format": "email",
+                                                        "example": "jean@exemple.com"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "operateur_entreprise"
+                                                    },
+                                                    "permissions": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "example": "voir_transactions"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "available_permissions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "voir_transactions"
+                                            }
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "200"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "USERS_LISTED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "L'utilisateur authentifié n'est pas autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "403"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ACCESS_DENIED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucune entreprise trouvée pour l'utilisateur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucune entreprise trouvée pour cet administrateur."
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "404"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENTERPRISE_NOT_FOUND"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/my-permissions": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Afficher les permissions de l'utilisateur connecté",
+                "operationId": "myPermissions",
+                "responses": {
+                    "200": {
+                        "description": "Permissions récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "example": "operateur_entreprise"
+                                        },
+                                        "permissions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "voir_transactions"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/entreprises": {
+            "post": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Créer une entreprise avec documents",
+                "operationId": "storeEntreprise",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "nom_entreprise",
+                                    "type_entreprise",
+                                    "pays_siege_social"
+                                ],
+                                "properties": {
+                                    "nom_entreprise": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "MaSuperEntreprise"
+                                    },
+                                    "nom_commercial": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "numero_identification_fiscale": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_registre_commerce": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_telephone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type_entreprise": {
+                                        "type": "string",
+                                        "enum": [
+                                            "SARL",
+                                            "SA",
+                                            "EURL",
+                                            "Auto-entrepreneur",
+                                            "Association",
+                                            "Individuel"
+                                        ],
+                                        "example": "SARL"
+                                    },
+                                    "secteur_activite": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "nullable": true
+                                    },
+                                    "description_activite": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "adresse_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "ville_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "nullable": true
+                                    },
+                                    "code_postal_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "nullable": true
+                                    },
+                                    "pays_siege_social": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Bénin",
+                                            "Cameroun",
+                                            "Côte d'Ivoire",
+                                            "Guinée-Bissau",
+                                            "Guinée-Conakry",
+                                            "Mali",
+                                            "Niger",
+                                            "République Centrafricaine",
+                                            "Congo-Brazzaville",
+                                            "Sénégal",
+                                            "Tchad",
+                                            "Togo",
+                                            "Ouganda",
+                                            "Afrique du Sud",
+                                            "Botswana",
+                                            "MoneyGhana",
+                                            "Rwanda",
+                                            "Soudan",
+                                            "Zambie",
+                                            "MoneyBénin"
+                                        ],
+                                        "example": "Cameroun"
+                                    },
+                                    "email_contact_principal": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "telephone_contact_principal": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": true
+                                    },
+                                    "site_web_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "logo_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "numero_siren": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_siret": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_tva_intracommunautaire": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "capital_social": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "annee_creation_entreprise": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "statut_kyb": {
+                                        "type": "string",
+                                        "enum": [
+                                            "en_attente",
+                                            "approuve",
+                                            "rejete",
+                                            "en_revision"
+                                        ],
+                                        "example": "en_attente"
+                                    },
+                                    "motif_statut": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "rccm_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "attestation_fiscale_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "statuts_societe_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "declaration_regularite_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "attestation_immatriculation_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "date_expiration_rccm": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_expiration_attestation_fiscale": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_maj_statuts": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_emission_declaration_regularite": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_emission_attestation_immatriculation": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Entreprise créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise et fichiers créés avec succès."
+                                        },
+                                        "entreprise": {
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 201
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENTREPRISE_CREATED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entreprise introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise introuvable."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_NOT_FOUND"
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "example": "id"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "UNAUTHENTICATED"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "401"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "FORBIDDEN"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "403"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/entreprises/{id}": {
+            "get": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Afficher les détails d'une entreprise",
+                "description": "Récupère une entreprise avec ses fichiers et son utilisateur",
+                "operationId": "showEntreprise",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entreprise",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Entreprise trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "entreprise": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entreprise introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise introuvable."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_NOT_FOUND"
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "example": "id"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "UNAUTHENTICATED"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "401"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "FORBIDDEN"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "403"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Mettre à jour une entreprise et ses fichiers",
+                "description": "Met à jour les informations d'une entreprise ainsi que ses documents. L'utilisateur doit être authentifié et autorisé.",
+                "operationId": "updateEntreprise",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entreprise à mettre à jour",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "dkjnfdkjwwoio32hdwc8s9ebcjscdjs"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "nom_entreprise": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "MaSuperEntreprise"
+                                    },
+                                    "nom_commercial": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "numero_identification_fiscale": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_registre_commerce": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_telephone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type_entreprise": {
+                                        "type": "string",
+                                        "enum": [
+                                            "SARL",
+                                            "SA",
+                                            "EURL",
+                                            "Auto-entrepreneur",
+                                            "Association",
+                                            "Individuel"
+                                        ],
+                                        "example": "SARL"
+                                    },
+                                    "secteur_activite": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "nullable": true
+                                    },
+                                    "description_activite": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "adresse_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "ville_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "nullable": true
+                                    },
+                                    "code_postal_siege_social": {
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "nullable": true
+                                    },
+                                    "pays_siege_social": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Bénin",
+                                            "Cameroun",
+                                            "Côte d'Ivoire",
+                                            "Guinée-Bissau",
+                                            "Guinée-Conakry",
+                                            "Mali",
+                                            "Niger",
+                                            "République Centrafricaine",
+                                            "Congo-Brazzaville",
+                                            "Sénégal",
+                                            "Tchad",
+                                            "Togo",
+                                            "Ouganda",
+                                            "Afrique du Sud",
+                                            "Botswana",
+                                            "MoneyGhana",
+                                            "Rwanda",
+                                            "Soudan",
+                                            "Zambie",
+                                            "MoneyBénin"
+                                        ],
+                                        "example": "Cameroun"
+                                    },
+                                    "email_contact_principal": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "telephone_contact_principal": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": true
+                                    },
+                                    "site_web_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "logo_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "numero_siren": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_siret": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "numero_tva_intracommunautaire": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "capital_social": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "nullable": true
+                                    },
+                                    "annee_creation_entreprise": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "statut_kyb": {
+                                        "type": "string",
+                                        "enum": [
+                                            "en_attente",
+                                            "approuve",
+                                            "rejete",
+                                            "en_revision"
+                                        ],
+                                        "example": "en_attente"
+                                    },
+                                    "motif_statut": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "rccm_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "attestation_fiscale_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "statuts_societe_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "declaration_regularite_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "attestation_immatriculation_file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "date_expiration_rccm": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_expiration_attestation_fiscale": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_maj_statuts": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_emission_declaration_regularite": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    },
+                                    "date_emission_attestation_immatriculation": {
+                                        "type": "integer",
+                                        "maximum": 2100,
+                                        "minimum": 1900,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Entreprise mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise et fichiers mis à jour avec succès."
+                                        },
+                                        "entreprise": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entreprise introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise introuvable."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_NOT_FOUND"
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "example": "id"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "UNAUTHENTICATED"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "401"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "FORBIDDEN"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "403"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Supprimer une entreprise et ses fichiers",
+                "description": "Supprime une entreprise, ses fichiers associés et son dossier de stockage. Nécessite une autorisation.",
+                "operationId": "deleteEntreprise",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entreprise à supprimer",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Entreprise supprimée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise et fichiers supprimés avec succès."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_DELETED"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entreprise introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise introuvable."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_NOT_FOUND"
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "example": "id"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "UNAUTHENTICATED"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "401"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "FORBIDDEN"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "403"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/entreprises/me/company": {
+            "get": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Afficher les détails d'une entreprise",
+                "description": "Récupère une entreprise avec ses fichiers et son utilisateur",
+                "operationId": "showEntrepriseByToken",
+                "responses": {
+                    "200": {
+                        "description": "Entreprise trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "entreprise": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Entreprise introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise introuvable."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ENT_NOT_FOUND"
+                                        },
+                                        "field": {
+                                            "type": "string",
+                                            "example": "id"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "UNAUTHENTICATED"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "401"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "FORBIDDEN"
+                                        },
+                                        "status": {
+                                            "type": "number",
+                                            "example": "403"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Liste des utilisateurs",
+                "description": "Récupère la liste paginée des utilisateurs.",
+                "operationId": "c457726701591d1183b53aa71fc13441",
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs récupérée avec succès.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "example": "84d8c8e2-dea9-4381-bcc8-8d0ecd24eb2b"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "nath"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "floretaffot1@gmail.com"
+                                            },
+                                            "telephone": {
+                                                "type": "string",
+                                                "example": "677852729"
+                                            },
+                                            "email_verified_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-06-26T17:32:23.000000Z"
+                                            },
+                                            "role": {
+                                                "type": "string",
+                                                "example": "super_admin"
+                                            },
+                                            "permissions": {
+                                                "type": "string",
+                                                "example": "all_permissions"
+                                            },
+                                            "reset_password_token": {
+                                                "type": "string",
+                                                "example": null,
+                                                "nullable": true
+                                            },
+                                            "reset_password_expires_at": {
+                                                "type": "string",
+                                                "example": null,
+                                                "nullable": true
+                                            },
+                                            "date_derniere_connexion": {
+                                                "type": "string",
+                                                "example": "2025-07-01 09:46:59"
+                                            },
+                                            "statut": {
+                                                "type": "string",
+                                                "example": "inactif"
+                                            },
+                                            "langue_preferee": {
+                                                "type": "string",
+                                                "example": "fr"
+                                            },
+                                            "preferences_notifications": {
+                                                "type": "string",
+                                                "example": "notifications"
+                                            },
+                                            "photo_profil_url": {
+                                                "type": "string",
+                                                "example": null,
+                                                "nullable": true
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-06-26T16:32:11.000000Z"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-07-01T09:46:59.000000Z"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L’utilisateur n’est pas authentifié ou le jeton est invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès interdit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 403
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vous n’avez pas les autorisations nécessaires pour accéder à cette ressource."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données envoyées ne sont pas valides."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le champ email est obligatoire."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne du serveur.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur inattendue s’est produite sur le serveur."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Détails d’un utilisateur",
+                "description": "Récupère les informations d’un utilisateur à partir de son identifiant.",
+                "operationId": "36a33ff774d5cba33c039dec2c3e0287",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant UUID de l’utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "84d8c8e2-dea9-4381-bcc8-8d0ecd24eb2b"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur récupéré avec succès.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "example": "84d8c8e2-dea9-4381-bcc8-8d0ecd24eb2b"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "nath"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "floretaffot1@gmail.com"
+                                        },
+                                        "telephone": {
+                                            "type": "string",
+                                            "example": "677852729"
+                                        },
+                                        "email_verified_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-06-26T17:32:23.000000Z"
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "example": "super_admin"
+                                        },
+                                        "permissions": {
+                                            "type": "string",
+                                            "example": "all_permissions"
+                                        },
+                                        "reset_password_token": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "reset_password_expires_at": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "date_derniere_connexion": {
+                                            "type": "string",
+                                            "example": "2025-07-01 09:46:59"
+                                        },
+                                        "statut": {
+                                            "type": "string",
+                                            "example": "inactif"
+                                        },
+                                        "langue_preferee": {
+                                            "type": "string",
+                                            "example": "fr"
+                                        },
+                                        "preferences_notifications": {
+                                            "type": "string",
+                                            "example": "notifications"
+                                        },
+                                        "photo_profil_url": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-06-26T16:32:11.000000Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-07-01T09:46:59.000000Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L’utilisateur n’est pas authentifié ou le jeton est invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès interdit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 403
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vous n’avez pas les autorisations nécessaires pour accéder à cette ressource."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur introuvable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 404
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non trouvé"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun utilisateur trouvé avec cet identifiant."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur interne du serveur.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "number",
+                                            "example": 500
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur inattendue s’est produite sur le serveur."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Modifier un utilisateur",
+                "description": "Met à jour les informations d’un utilisateur. Les données sont envoyées en multipart/form-data.",
+                "operationId": "b9091397c8b25f12c6adb74be6ce3a5a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'utilisateur à modifier",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Nath modifié"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "modifie@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "690000000"
+                                    },
+                                    "langue_preferee": {
+                                        "type": "string",
+                                        "enum": [
+                                            "fr",
+                                            "en"
+                                        ],
+                                        "example": "fr"
+                                    },
+                                    "preferences_notifications": {
+                                        "type": "string",
+                                        "enum": [
+                                            "email_marketing",
+                                            "notifications"
+                                        ],
+                                        "example": "notifications"
+                                    },
+                                    "photo_profil": {
+                                        "description": "Fichier image JPEG, PNG ou JPG",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur mis à jour avec succès."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données envoyées ne sont pas valides."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Supprimer un utilisateur",
+                "description": "Supprime un utilisateur de la base de données.",
+                "operationId": "fa56cffde745d3f152f95cbacd936c0b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de l’utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur supprimé avec succès.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur supprimé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur introuvable."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Utilisateurs",
+            "description": "Utilisateurs"
+        },
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        },
+        {
+            "name": "Permissions",
+            "description": "Permissions"
+        },
+        {
+            "name": "Entreprises",
+            "description": "Entreprises"
+        }
+    ]
+}
