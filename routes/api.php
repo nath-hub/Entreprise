@@ -32,10 +32,9 @@ Route::post('/login', [AuthController::class, 'login'])
 
 Route::post('password/reset', [AuthController::class, 'sendResetLink']);
 
+Route::post('verify_code', [AuthController::class, 'verifyCode']);
 
 Route::middleware('auth:sanctum')->group(function () {
-
-    Route::post('verify_code', [AuthController::class, 'verifyCode']);
 
     Route::post('/change_password', [AuthController::class, 'changePassword']);
     Route::post('/password/update', [AuthController::class, 'updatePassword']);
