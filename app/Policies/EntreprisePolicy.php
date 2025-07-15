@@ -1,8 +1,7 @@
 <?php
 
 namespace App\Policies;
-
-use Illuminate\Auth\Access\Response;
+ 
 use App\Models\Entreprise;
 use App\Models\User;
 
@@ -16,7 +15,7 @@ class EntreprisePolicy
     }
 
     /**
-     * Détermine si l'utilisateur peut voir toutes les entreprises.
+     * Détermine si l'utilisateur peut voir toutes les entreprises
      */
     public function viewAny(User $user): bool
     {
