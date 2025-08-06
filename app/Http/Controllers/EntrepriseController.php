@@ -242,7 +242,7 @@ class EntrepriseController extends Controller
 
             // La policy 'view' est déjà appliquée via authorizeResource
             if ($this->authorize('view', $entreprise)) {
-                return response()->json(['entreprise' => $entreprise], 200);
+                return response()->json($entreprise, 200);
             }
         } catch (ModelNotFoundException $e) {
             return response()->json([

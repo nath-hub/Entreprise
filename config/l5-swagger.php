@@ -14,6 +14,12 @@ return [
                  */
                 'api' => 'api/documentation',
             ],
+            'servers' => [
+                [
+                    'url' => env('APP_URL', 'http://localhost:8000'),
+                    'description' => 'Base URL depuis .env',
+                ],
+            ],
             'paths' => [
                 /*
                  * Edit to include full URL in ui for assets

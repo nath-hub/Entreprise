@@ -3,10 +3,12 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\EnterprisePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FichierEntrepriseController;
 use App\Http\Controllers\EntrepriseController;
+use App\Http\Controllers\OperatorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +63,29 @@ Route::prefix('entreprises/')->middleware('auth:sanctum')->group(function () {
     Route::delete('{id}', [EntrepriseController::class, 'destroy']);
 });
 
+
+Route::prefix('countries/')->group(function () {
+    Route::get('', [CountryController::class, 'index']);
+    Route::post('', [CountryController::class, 'store']);
+    Route::get('{id}', [CountryController::class, 'show']); 
+    Route::get('code/{code}', [CountryController::class, 'showCountryByCode']); 
+    Route::post('{id}', [CountryController::class, 'update']);
+    Route::delete('{id}', [CountryController::class, 'destroy']);
+});
+
+
+Route::prefix('operators/')->group(function () {
+    Route::get('', [OperatorController::class, 'index']);
+    Route::post('', [OperatorController::class, 'store']);
+    Route::get('{id}', [OperatorController::class, 'show']); 
+    Route::get('code/{code}', [OperatorController::class, 'showCountryByCode']); 
+    Route::post('{id}', [OperatorController::class, 'update']);
+    Route::delete('{id}', [OperatorController::class, 'destroy']);
+});
+
+// Route::apiResource('countries', CountryController::class)->middleware('auth:sanctum');
+
+// Route::middleware('auth:sanctum')->apiResource('operators', OperatorController::class);
 
 Route::get('/health', function () {
     return response()->json([
