@@ -2,16 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\InternalHttpClient;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\MultiDatabaseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Notifications\VerificationCode;
 use Illuminate\Support\Facades\Auth;
+
 
 class AuthController extends Controller
 {
+    use MultiDatabaseTrait;
+    protected $httpClient;
+
+    public function __construct()
+    {
+        $this->httpClient = new InternalHttpClient();
+    }
 
     /**
      * @OA\Post(
@@ -103,30 +113,49 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'      => 'required|string|max:255',
-            'email'     => 'required|email|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
             'telephone' => 'required|string|unique:users',
-            'password'  => 'required|string|min:6',
-            'role'      => 'in:super_admin,admin_entreprise,operateur_entreprise,consultant_entreprise',
+            'password' => 'required|string|min:6',
+            'role' => 'in:super_admin,admin_entreprise,operateur_entreprise,consultant_entreprise',
         ]);
 
         $verification_code = Str::random(6);
 
-        $user = User::create([
-            'name'      => $request->name,
-            'email'     => $request->email,
+        $currentDateTime = Carbon::now();
+
+        $resetPasswordCode = $currentDateTime->addHour();
+
+        $userData = [
+            'name' => $request->name,
+            'email' => $request->email,
             'telephone' => $request->telephone,
-            'password'  => Hash::make($request->password),
-            'role'      => $request->role ?? 'operateur_entreprise',
+            'password' => Hash::make($request->password),
+            'role' => $request->role ?? 'operateur_entreprise',
             'permissions' => 'all_permissions',
             'verification_code' => $verification_code,
-        ]);
+            'reset_password_expires_at' => $resetPasswordCode,
+            'environment' => 'sandbox', // par défaut
+        ];
 
-        // $user->notify(new VerificationCode($verification_code));
+        $user = $this->executeOnBothDatabases(function ($connection, $data) {
+            $user = new User();
+            $user->setConnection($connection);
+            $user->fill($data);
+            $user->save();
+            return $user;
+        }, $userData);
+
+        $user = (object) $user;
+
+        // 🔔 Notification (après création)
+        $authServiceUrl = config('services.services_notifications.url');
+        $httpClient = new InternalHttpClient();
+        $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', ['id' => $user->mysql_sandbox->id], ['read:users']);
 
         return response()->json([
             'status' => 201,
-            'user_id' => $user->id,
+            'user_id' => $user->mysql_sandbox->id,
         ], 201);
     }
 
@@ -208,38 +237,81 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string|min:6',
+        ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        $email = $request->input('email');
+        $password = $request->input('password');
+
+        // Authentification multi-DB
+        $user = $this->authenticateUser($email, $password);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Identifiants invalides',
+                'status' => 401,
+            ], 401);
         }
 
-        $user = Auth::user();
-
+        // Vérification email
         if (is_null($user->email_verified_at)) {
-            Auth::logout();
             return response()->json([
                 'message' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
-                'status' => '403',
+                'status' => 403,
                 'field' => 'email_verification'
             ], 403);
         }
 
+        // Première connexion → notifier
+        if ($user->date_derniere_connexion == null) {
+            $authServiceUrl = config('services.services_notifications.url');
+
+            $httpClient = new InternalHttpClient();
+            $httpClient->post(
+                $request,
+                $authServiceUrl,
+                'api/notifications/welcome',
+                ['id' => $user->id],
+                ['read:users']
+            );
+        }
+
+        // Génération du token
         $token = $user->createToken('API Token')->plainTextToken;
 
+        // Mise à jour du statut utilisateur
         $user->date_derniere_connexion = now();
+        $user->statut = 'actif';
         $user->save();
 
         return response()->json([
             'message' => 'Connexion réussie.',
-            // 'user'    => $user,
-            'status'  => 200,
+            'status' => 200,
             'token_type' => 'Bearer',
-            'token'   => $token
+            'token' => $token,
+            'environment' => $user->environment ?? null,
         ], 200);
     }
 
 
+    protected function authenticateUser($email, $password)
+    {
+        $connections = ['mysql_prod', 'mysql_sandbox'];
+
+        foreach ($connections as $connection) {
+            $user = User::on($connection)->where('email', $email)->first();
+
+            if ($user && Hash::check($password, $user->password)) {
+                // Ajouter info sur l’environnement
+                $user->environment = $connection === 'mysql_prod' ? 'prod' : 'sandbox';
+                return $user;
+            }
+        }
+
+        return null;
+    }
 
 
     /**
@@ -298,6 +370,7 @@ class AuthController extends Controller
 
     public function showByToken(Request $request)
     {
+
         $me = $request->user();
 
         return response()->json($me);
@@ -349,43 +422,6 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Déconnexion réussie', 'status' => 200], 200);
-    }
-
-
-    // ✅ RESET PASSWORD
-
-    public function verifyCode(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|string|email',
-            'code' => 'required|string|size:6',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || $user->verification_code != $request->code) {
-            return response()->json([
-                'status' => 401,
-                'code' => 'INVALID_VERIFICATION_CODE',
-                'message' => 'code de verification invalide'
-            ], 401);
-        }
-
-        $user->verification_code = null;
-        $user->email_verified_at = now();
-        $user->save();
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Compte verifier avec succes',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'role' => $user->role,
-        ]);
     }
 
 
@@ -453,6 +489,107 @@ class AuthController extends Controller
      *     )
      * )
      */
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || $user->verification_code != $request->code) {
+            return response()->json([
+                'status' => 401,
+                'code' => 'INVALID_VERIFICATION_CODE',
+                'message' => 'code de verification invalide'
+            ], 401);
+        }
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-account-verified-success', ['id' => $user->id], ['read:users']);
+
+
+        $user->verification_code = null;
+        $user->email_verified_at = now();
+        $user->save();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Compte verifier avec succes',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'role' => $user->role,
+        ]);
+    }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/password/reset",
+     *     tags={"Authentification"},
+     *     summary="Vérifier le code de confirmation",
+     *     description="Vérifie le code de vérification envoyé à l'adresse email de l'utilisateur et active son compte.",
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 required={"email", "code"},
+     *                 @OA\Property(property="email", type="string", format="email", example="utilisateur@example.com"),
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte vérifié avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=200),
+     *             @OA\Property(property="message", type="string", example="Un lien de réinitialisation vous a été envoyé."),
+     *             @OA\Property(property="code", type="string", example="RESET_LINK_SENT"),
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Code invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=401),
+     *             @OA\Property(property="code", type="string", example="INVALID_VERIFICATION_CODE"),
+     *             @OA\Property(property="message", type="string", example="code de verification invalide")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=422),
+     *             @OA\Property(property="status", type="string", example="erreur de validation"),
+     *             @OA\Property(property="message", type="string", example="L’email et le code sont obligatoires.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=500),
+     *             @OA\Property(property="status", type="string", example="erreur serveur"),
+     *             @OA\Property(property="message", type="string", example="Une erreur est survenue.")
+     *         )
+     *     )
+     * )
+     */
 
     public function sendResetLink(Request $request)
     {
@@ -460,7 +597,7 @@ class AuthController extends Controller
             'email' => 'required|email',
         ], [
             'email.required' => "L'adresse email est obligatoire.",
-            'email.email'    => "Le format de l'adresse email est invalide."
+            'email.email' => "Le format de l'adresse email est invalide."
         ]);
 
         $user = User::where('email', $request->input('email'))->first();
@@ -470,7 +607,12 @@ class AuthController extends Controller
             $user->verification_code = Str::random(6);
             $user->save();
 
-            // $user->notify(new VerificationCode($user->verification_code));
+            $authServiceUrl = config('services.services_notifications.url');
+
+            $httpClient = new InternalHttpClient();
+
+            $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', ['id' => $user->id], ['read:users']);
+
 
             return response()->json([
                 "message" => "Un lien de réinitialisation vous a été envoyé.",
@@ -560,6 +702,13 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ])->save();
 
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id], ['read:users']);
+
+
         return response()->json(["statut" => 200, 'message' => 'Your password has been reset.'], 200);
     }
 
@@ -628,6 +777,13 @@ class AuthController extends Controller
 
         $user->password = Hash::make($request->new_password);
         $user->save();
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id], ['read:users']);
+
 
         return response()->json(['statut' => 200, 'code' => 'PASS_CHANGED_SUCCESS', 'message' => 'Votre mot de passe a été changé avec succès.'], 200);
     }

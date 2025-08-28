@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Country;
+use App\Models\User;
+use App\Traits\MultiDatabaseTrait;
 use Illuminate\Http\Request;
 
 
 class CountryController extends Controller
 {
+    use MultiDatabaseTrait;
     /**
      * @OA\Get(
      *     path="/api/countries",
@@ -36,7 +39,7 @@ class CountryController extends Controller
      *             )
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Requête invalide",
@@ -75,9 +78,12 @@ class CountryController extends Controller
 
     public function index()
     {
-       auth()->user();
- 
-        return Country::all();
+        $connection = $this->getDatabaseConnection();
+        $userId = auth()->id(); // id de l’utilisateur connecté dans la session/token
+
+        $user = User::on($connection)->find($userId);
+
+        return Country::on($connection)->all();
     }
 
     /**
@@ -88,7 +94,7 @@ class CountryController extends Controller
      *     operationId="showCountry",
      *     tags={"Pays"},
      *     security={{"bearerAuth":{}}},
-     * 
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -120,7 +126,7 @@ class CountryController extends Controller
      *             @OA\Property(property="message", type="string", example="Requête invalide")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Non authentifié",
@@ -128,7 +134,7 @@ class CountryController extends Controller
      *             @OA\Property(property="message", type="string", example="Non authentifié")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Accès refusé",
@@ -138,7 +144,7 @@ class CountryController extends Controller
      *             @OA\Property(property="code", type="string", example="PERMISSION_DENIED")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Pays introuvable",
@@ -151,8 +157,9 @@ class CountryController extends Controller
 
     public function show($id)
     {
-       
-        $country = Country::find($id);
+        $connection = $this->getDatabaseConnection();
+
+        $country = Country::on($connection)->find($id);
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
@@ -160,14 +167,14 @@ class CountryController extends Controller
     }
 
 
-        /**
+    /**
      * @OA\Get(
      *     path="/api/countries/code/{code}",
      *     summary="Afficher un pays par CODE",
      *     description="Retourne les informations d'un pays spécifique. Accessible uniquement au super_admin.",
      *     operationId="showCountryByCode",
-     *     tags={"Pays"}, 
-     * 
+     *     tags={"Pays"},
+     *
      *     @OA\Parameter(
      *         name="code",
      *         in="path",
@@ -199,7 +206,7 @@ class CountryController extends Controller
      *             @OA\Property(property="message", type="string", example="Requête invalide")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Non authentifié",
@@ -207,7 +214,7 @@ class CountryController extends Controller
      *             @OA\Property(property="message", type="string", example="Non authentifié")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Accès refusé",
@@ -217,7 +224,7 @@ class CountryController extends Controller
      *             @OA\Property(property="code", type="string", example="PERMISSION_DENIED")
      *         )
      *     ),
-     * 
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Pays introuvable",
@@ -230,8 +237,9 @@ class CountryController extends Controller
 
     public function showCountryByCode($code)
     {
-       
-        $country = Country::where('code', $code)->where('is_active', true)->first();
+        $connection = $this->getDatabaseConnection();
+
+        $country = Country::on($connection)->where('code', $code)->where('is_active', true)->first();
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
@@ -339,7 +347,16 @@ class CountryController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $country = Country::create($validated);
+        $country = $this->executeOnBothDatabases(function ($connection, $data) {
+            $country = new Country();
+            $country->setConnection($connection);
+            $country->fill($data);
+            $country->save();
+            return $country;
+        }, $validated);
+
+        $country = (object) $country;
+
 
         return response()->json($country, 201);
     }
@@ -398,7 +415,7 @@ class CountryController extends Controller
      *             @OA\Property(property="updated_at", type="string", format="date-time")
      *         )
      *     ),
-        *     @OA\Response(
+     *     @OA\Response(
      *         response=400,
      *         description="Requête invalide",
      *         @OA\JsonContent(
@@ -436,13 +453,16 @@ class CountryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = auth()->user();
+        $connection = $this->getDatabaseConnection();
+        $userId = auth()->id(); // id de l’utilisateur connecté dans la session/token
+
+        $user = User::on($connection)->find($userId);
 
         if ($user->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $country = Country::find($id);
+        $country = Country::on($connection)->find($id);
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
@@ -521,13 +541,16 @@ class CountryController extends Controller
     public function destroy($id)
     {
 
-        $user = auth()->user();
+        $connection = $this->getDatabaseConnection();
+        $userId = auth()->id(); // id de l’utilisateur connecté dans la session/token
+
+        $user = User::on($connection)->find($userId);
 
         if ($user->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $country = Country::find($id);
+        $country = Country::on($connection)->find($id);
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }

@@ -21,7 +21,7 @@ use App\Http\Controllers\OperatorController;
 |
 */
 
- 
+
 Route::post('/register', [AuthController::class, 'register'])
     ->name('auth.register');
 
@@ -44,6 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    Route::put('/update/status/{id}', [UserController::class, 'updateStatus']);
+
+
     // Permissions
     Route::post('/permissions/assign', [EnterprisePermissionController::class, 'assignPermissions']);
     Route::post('/permissions/revoke', [EnterprisePermissionController::class, 'revokePermissions']);
@@ -60,15 +63,16 @@ Route::prefix('entreprises/')->middleware('auth:sanctum')->group(function () {
     Route::get('{id}', [EntrepriseController::class, 'show']);
     Route::get('me/company', [EntrepriseController::class, 'showByToken']);
     Route::post('{id}', [EntrepriseController::class, 'update']);
+    Route::post('update/status/{id}', [EntrepriseController::class, 'updateStatus']);
     Route::delete('{id}', [EntrepriseController::class, 'destroy']);
 });
 
 
 Route::prefix('countries/')->group(function () {
     Route::get('', [CountryController::class, 'index']);
-    Route::post('', [CountryController::class, 'store']);
-    Route::get('{id}', [CountryController::class, 'show']); 
-    Route::get('code/{code}', [CountryController::class, 'showCountryByCode']); 
+    Route::post('', [CountryController::class, 'store'])->middleware('auth:sanctum');
+    Route::get('{id}', [CountryController::class, 'show']);
+    Route::get('code/{code}', [CountryController::class, 'showCountryByCode']);
     Route::post('{id}', [CountryController::class, 'update']);
     Route::delete('{id}', [CountryController::class, 'destroy']);
 });
@@ -76,9 +80,9 @@ Route::prefix('countries/')->group(function () {
 
 Route::prefix('operators/')->group(function () {
     Route::get('', [OperatorController::class, 'index']);
-    Route::post('', [OperatorController::class, 'store']);
-    Route::get('{id}', [OperatorController::class, 'show']); 
-    Route::get('code/{code}', [OperatorController::class, 'showCountryByCode']); 
+    Route::post('', [OperatorController::class, 'store'])->middleware('auth:sanctum');
+    Route::get('{id}', [OperatorController::class, 'show']);
+    Route::get('code/{code}', [OperatorController::class, 'showCountryByCode']);
     Route::post('{id}', [OperatorController::class, 'update']);
     Route::delete('{id}', [OperatorController::class, 'destroy']);
 });

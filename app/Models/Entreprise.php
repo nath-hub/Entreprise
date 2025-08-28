@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\MultiDatabaseTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Entreprise extends Model
 {
-    use HasFactory;
+    use HasFactory, MultiDatabaseTrait;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -29,6 +30,14 @@ class Entreprise extends Model
             $model->id = (string) Str::uuid();
         });
     }
+
+
+    public function setConnection($connection)
+    {
+        $this->connection = $connection;
+        return $this;
+    }
+
 
     public function fichiers()
     {

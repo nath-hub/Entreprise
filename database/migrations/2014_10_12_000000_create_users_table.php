@@ -28,7 +28,8 @@ return new class extends Migration
             $table->uuid('granted_by')->nullable()->index(); // UUID for the user who granted permissions
             $table->enum('statut', ['actif', 'inactif', 'suspendu', 'bloque', 'en_attente_verification'])->default('inactif');
             $table->enum('langue_preferee', ['fr', 'en'])->default('fr');
-            $table->enum('preferences_notifications', ['email_marketing', 'notifications'])->default('notifications');
+            $table->enum('environment', ['prod', 'sandbox'])->default('sandbox');
+            $table->boolean('notifications_transactions')->default(true);
             $table->string('photo_profil_url')->nullable();
             $table->rememberToken();
             $table->timestamps();
@@ -43,7 +44,7 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
 
-        
+
     }
 
     /**
