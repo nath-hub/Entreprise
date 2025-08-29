@@ -389,4 +389,97 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Utilisateur supprimé', 'status' => 200], 200);
     }
+
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/update/status/{id}",
+     *     tags={"Utilisateurs"},
+     *     summary="Modifier un utilisateur",
+     *     description="Met à jour le status d’un utilisateur. Les données sont envoyées en multipart/form-data.",
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l'utilisateur à modifier",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="status",
+     *                     type="string",
+     *                     enum={"actif", "inactif", "suspendu", "bloque", "en_attente_verification"},
+     *                     example="fr"
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Utilisateur mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=200),
+     *             @OA\Property(property="status", type="string", example="succès"),
+     *             @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=422),
+     *             @OA\Property(property="status", type="string", example="Erreur de validation"),
+     *             @OA\Property(property="message", type="string", example="Les données envoyées ne sont pas valides.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=401),
+     *             @OA\Property(property="status", type="string", example="Non authentifié"),
+     *             @OA\Property(property="message", type="string", example="Jeton manquant ou invalide.")
+     *         )
+     *     )
+     * )
+     */
+
+    public function updateStatus(Request $request, $id)
+    {
+
+        $user = auth()->user();
+
+        if ($user->role !== 'super_admin') {
+            return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:actif,inactif,suspendu,bloque,en_attente_verification',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        $user->update(['statut' => $request->input('status')]);
+
+        return response()->json([
+            'code' => 200,
+            'status' => 'succès',
+            'message' => 'Utilisateur mis à jour avec succès.',
+            'data' => $user
+        ]);
+    }
+
 }

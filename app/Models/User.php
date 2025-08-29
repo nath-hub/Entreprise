@@ -31,8 +31,8 @@ class User extends Authenticatable
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+            if (!$model->getKey()) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
             }
         });
     }
@@ -42,12 +42,6 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-        'deux_facteurs_secret',
-        'verification_code'
-    ];
 
     /**
      * The attributes that should be cast.
@@ -65,7 +59,9 @@ class User extends Authenticatable
     }
 
 
-    public function isSuperadmin(): bool{
+    public function isSuperadmin(): bool
+    {
         return $this->role === 'super_admin';
     }
+
 }

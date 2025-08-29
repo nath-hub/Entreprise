@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\InternalHttpClient;
 use App\Models\Entreprise;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreEntrepriseRequest;
 use App\Http\Requests\UpdateEntrepriseRequest;
 use App\Models\FichierEntreprise;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -134,23 +136,33 @@ class EntrepriseController extends Controller
             'declaration_regularite_file',
             'attestation_immatriculation_file',
         ]);
-        $entrepriseData['user_id'] = $user->id;
 
-        $entreprise = Entreprise::create($entrepriseData);
+        $entrepriseData2 = $request->except([
+            'rccm_file',
+            'attestation_fiscale_file',
+            'statuts_societe_file',
+            'declaration_regularite_file',
+            'attestation_immatriculation_file',
+        ]);
+
+        $user2 = User::on('mysql_prod')->where('email', $user->email)->first();
+
+        $entrepriseData['user_id'] = $user->id;
+        $entrepriseData2['user_id'] = $user2->id;
+
+        $entreprise = Entreprise::on('mysql_sandbox')->create($entrepriseData);
+        $entreprise2 = Entreprise::on('mysql_prod')->create($entrepriseData2);
 
         $fichierData = [
-            'entreprise_id' => $entreprise->id,
-            'user_id' => $user->id,
             'statut_fichier' => 'en_attente',
         ];
 
         $fileFieldsMap = [
-            'rccm_file'                 => 'url_rccm',
-            'attestation_fiscale_file'  => 'url_attestation_fiscale',
-            'statuts_societe_file'      => 'url_statuts_societe',
+            'rccm_file' => 'url_rccm',
+            'attestation_fiscale_file' => 'url_attestation_fiscale',
+            'statuts_societe_file' => 'url_statuts_societe',
             'declaration_regularite_file' => 'url_declaration_regularite',
             'attestation_immatriculation_file' => 'url_attestation_immatriculation',
-
         ];
 
         foreach ($fileFieldsMap as $requestFileKey => $dbUrlColumn) {
@@ -172,11 +184,28 @@ class EntrepriseController extends Controller
         $fichierData['date_emission_declaration_regularite'] = $request->input('date_emission_declaration_regularite');
         $fichierData['date_emission_attestation_immatriculation'] = $request->input('date_emission_attestation_immatriculation');
 
-        $fichierEntreprise = FichierEntreprise::create($fichierData);
+        $fichierData['user_id'] = $user->id;
+        $fichierData['entreprise_id'] = $entreprise->id;
+
+        $fichierData2 = $fichierData;
+        $fichierData2['user_id'] = $user2->id;
+        $fichierData2['entreprise_id'] = $entreprise2->id;
+
+        FichierEntreprise::on('mysql_sandbox')->create($fichierData);
+
+        FichierEntreprise::on('mysql_prod')->create($fichierData2);
+
+        $authServiceUrl = config('services.services_notifications.url');
+        $httpClient = new InternalHttpClient();
+        $httpClient->post($request, $authServiceUrl, 'api/merchant-welcome', [
+            'id' => $user->id,
+            'environment' => 'sandbox',
+            'data' => $entreprise->nom_entreprise
+        ], ['read:users']);
 
         return response()->json([
             'message' => 'Entreprise et fichiers créés avec succès.',
-            'entreprise' => $entreprise->load('fichiers'),
+            'entreprise' => $entreprise,
             'status' => 201,
             'code' => 'ENTREPRISE_CREATED',
         ], 201);
@@ -204,7 +233,7 @@ class EntrepriseController extends Controller
      *             @OA\Property(property="entreprise", type="object")
      *         )
      *     ),
-  
+
      *       @OA\Response(
      *         response=404,
      *         description="Entreprise introuvable",
@@ -255,51 +284,51 @@ class EntrepriseController extends Controller
 
 
 
-     /**
-     * @OA\Get(
-     *     path="/api/entreprises/me/company",
-     *     tags={"Entreprises"},
-     *     summary="Afficher les détails d'une entreprise",
-     *     description="Récupère une entreprise avec ses fichiers et son utilisateur",
-     *     operationId="showEntrepriseByToken",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Entreprise trouvée",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="entreprise", type="object")
-     *         )
-     *     ),
-  
-     *       @OA\Response(
-     *         response=404,
-     *         description="Entreprise introuvable",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Entreprise introuvable."),
-     *             @OA\Property(property="code", type="string", example="ENT_NOT_FOUND"),
-     *             @OA\Property(property="field", type="string", example="id")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Non authentifié",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Non authentifié."),
-     *             @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *             @OA\Property(property="status", type="number", example="401")
-     *         )
-     *     ),
-     *        @OA\Response(
-     *         response=403,
-     *         description="Accès refusé",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Accès non autorisé"),
-     *             @OA\Property(property="code", type="string", example="FORBIDDEN"),
-     *             @OA\Property(property="status", type="number", example="403")
-     *         )
-     *     )
-     * )
-     */
+    /**
+    * @OA\Get(
+    *     path="/api/entreprises/me/company",
+    *     tags={"Entreprises"},
+    *     summary="Afficher les détails d'une entreprise",
+    *     description="Récupère une entreprise avec ses fichiers et son utilisateur",
+    *     operationId="showEntrepriseByToken",
+    *     security={{"bearerAuth":{}}},
+    *     @OA\Response(
+    *         response=200,
+    *         description="Entreprise trouvée",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="entreprise", type="object")
+    *         )
+    *     ),
+
+    *       @OA\Response(
+    *         response=404,
+    *         description="Entreprise introuvable",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="message", type="string", example="Entreprise introuvable."),
+    *             @OA\Property(property="code", type="string", example="ENT_NOT_FOUND"),
+    *             @OA\Property(property="field", type="string", example="id")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=401,
+    *         description="Non authentifié",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="message", type="string", example="Non authentifié."),
+    *             @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+    *             @OA\Property(property="status", type="number", example="401")
+    *         )
+    *     ),
+    *        @OA\Response(
+    *         response=403,
+    *         description="Accès refusé",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="message", type="string", example="Accès non autorisé"),
+    *             @OA\Property(property="code", type="string", example="FORBIDDEN"),
+    *             @OA\Property(property="status", type="number", example="403")
+    *         )
+    *     )
+    * )
+    */
 
     public function showByToken()
     {
@@ -308,7 +337,7 @@ class EntrepriseController extends Controller
 
         try {
             $entreprise = Entreprise::with('fichiers', 'user')->where('user_id', $user->id)->firstOrFail();
- 
+
 
             if ($this->authorize('view', $entreprise)) {
                 return response()->json($entreprise, 200);
@@ -428,7 +457,7 @@ class EntrepriseController extends Controller
      *             @OA\Property(property="status", type="number", example="403")
      *         )
      *     ),
-     * 
+     *
      * )
      */
 
@@ -436,11 +465,12 @@ class EntrepriseController extends Controller
     {
         try {
 
-            $entreprise = Entreprise::with('fichiers')->findOrFail($id);
+            $entreprise = Entreprise::on('mysql_sandbox')->with('fichiers')->findOrFail($id);
+            $entreprise2 = Entreprise::on('mysql_prod')->with('fichiers')->findOrFail($id);
 
             $this->authorize('update', $entreprise);
 
-            DB::beginTransaction();
+            DB::on('mysql_sandbox')->beginTransaction();
 
             $dataEntreprise = $request->except([
                 'rccm_file',
@@ -451,20 +481,22 @@ class EntrepriseController extends Controller
             ]);
 
             $entreprise->update($dataEntreprise);
+            $entreprise2->update($dataEntreprise);
 
             $fichierEntreprise = $entreprise->fichiers;
+            $fichierEntreprise2 = $entreprise2->fichiers;
 
             $fileFieldsMap = [
-                'rccm_file'                 => 'url_rccm',
-                'attestation_fiscale_file'  => 'url_attestation_fiscale',
-                'statuts_societe_file'      => 'url_statuts_societe',
+                'rccm_file' => 'url_rccm',
+                'attestation_fiscale_file' => 'url_attestation_fiscale',
+                'statuts_societe_file' => 'url_statuts_societe',
                 'declaration_regularite_file' => 'url_declaration_regularite',
                 'attestation_immatriculation_file' => 'url_attestation_immatriculation',
             ];
 
             $updatedFileUrls = [];
 
-            foreach ($fileFieldsMap as $fileInput  => $dbField) {
+            foreach ($fileFieldsMap as $fileInput => $dbField) {
 
                 if ($request->hasFile($fileInput)) {
                     if ($fichierEntreprise->$dbField) {
@@ -483,7 +515,7 @@ class EntrepriseController extends Controller
 
             $fileUpdates['date_expiration_rccm'] = $request->input('date_expiration_rccm') ?? $fichierEntreprise['date_expiration_rccm'];
             $fileUpdates['date_expiration_attestation_fiscale'] = $request->input('date_expiration_attestation_fiscale') ?? $fichierEntreprise['date_expiration_attestation_fiscale'];
-            $fileUpdates['date_maj_statuts'] = $request->input('date_maj_statuts') ??  $fichierEntreprise['date_maj_statuts'];
+            $fileUpdates['date_maj_statuts'] = $request->input('date_maj_statuts') ?? $fichierEntreprise['date_maj_statuts'];
             $fileUpdates['date_emission_declaration_regularite'] = $request->input('date_emission_declaration_regularite') ?? $fichierEntreprise['date_emission_declaration_regularite'];
             $fileUpdates['date_emission_attestation_immatriculation'] = $request->input('date_emission_attestation_immatriculation') ?? $fichierEntreprise['date_emission_attestation_immatriculation'];
 
@@ -607,4 +639,112 @@ class EntrepriseController extends Controller
             'status' => 200,
         ], 200);
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/update/status/{id}",
+     *     tags={"Entreprises"},
+     *     summary="Modifier une entreprises",
+     *     description="Met à jour le status d’une entreprises. Les données sont envoyées en multipart/form-data.",
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l'utilisateur à modifier",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="status",
+     *                     type="string",
+     *                     enum={"en_attente", "approuve", "rejete"},
+     *                     example="fr"
+     *                 ),
+     *             ),
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="motif_statut",
+     *                     type="string",
+     *                     example="Donnees mal renseigner"
+     *                 ),
+     *             )
+     *         ),
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Entreprises mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=200),
+     *             @OA\Property(property="status", type="string", example="succès"),
+     *             @OA\Property(property="message", type="string", example="Entreprises mis à jour avec succès."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=422),
+     *             @OA\Property(property="status", type="string", example="Erreur de validation"),
+     *             @OA\Property(property="message", type="string", example="Les données envoyées ne sont pas valides.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="integer", example=401),
+     *             @OA\Property(property="status", type="string", example="Non authentifié"),
+     *             @OA\Property(property="message", type="string", example="Jeton manquant ou invalide.")
+     *         )
+     *     )
+     * )
+     */
+
+    public function updateStatus(Request $request, $id)
+    {
+        $user = $request->user();
+
+        if ($user && $user->role !== 'super_admin') {
+            return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:en_attente,approuve,rejete',
+            'motif_statut' => 'nullable|string|max:255',
+        ]);
+
+        $entreprise = Entreprise::findOrFail($id);
+        $entreprise->update(['statut_kyb' => $request->input('status'), 'motif_statut' => $request->input('motif_statut')]);
+
+        FichierEntreprise::where('entreprise_id', $id)->update(['statut_fichier' => $request->input('status')]);
+
+        $authServiceUrl = config('services.services_notifications.url');
+        $httpClient = new InternalHttpClient();
+        $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', [
+            'id' => $user->id,
+            'entreprise' => $entreprise
+        ], ['read:users']);
+
+        return response()->json([
+            'code' => 200,
+            'status' => 'succès',
+            'message' => 'Entreprise mis à jour avec succès.',
+            'data' => $user
+        ]);
+    }
+
 }

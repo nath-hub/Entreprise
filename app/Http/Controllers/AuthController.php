@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\InternalHttpClient;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Notifications\VerificationCode;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -103,30 +105,51 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'      => 'required|string|max:255',
-            'email'     => 'required|email|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
             'telephone' => 'required|string|unique:users',
-            'password'  => 'required|string|min:6',
-            'role'      => 'in:super_admin,admin_entreprise,operateur_entreprise,consultant_entreprise',
+            'password' => 'required|string|min:6',
+            'role' => 'in:super_admin,admin_entreprise,operateur_entreprise,consultant_entreprise',
         ]);
 
         $verification_code = Str::random(6);
 
-        $user = User::create([
-            'name'      => $request->name,
-            'email'     => $request->email,
+        $userId = (string) Str::uuid();
+
+        // Prépare les données
+        $data = [
+            'id' => $userId,
+            'name' => $request->name,
+            'email' => $request->email,
             'telephone' => $request->telephone,
-            'password'  => Hash::make($request->password),
-            'role'      => $request->role ?? 'operateur_entreprise',
+            'password' => Hash::make($request->password),
+            'role' => $request->role ?? 'operateur_entreprise',
             'permissions' => 'all_permissions',
             'verification_code' => $verification_code,
-        ]);
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
 
-        // $user->notify(new VerificationCode($verification_code));
+        // Crée dans DB1
+        $userId1 = User::on('mysql_sandbox')->create($data);
+
+        // Crée dans DB2
+        $userId2 = User::on('mysql_prod')->create($data);
+
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', [
+            'id' => $userId1->id,
+            'environment' => 'sandbox'
+        ], ['read:users']);
+
 
         return response()->json([
             'status' => 201,
-            'user_id' => $user->id,
+            'user_id' => $userId1->id,
         ], 201);
     }
 
@@ -225,6 +248,20 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Première connexion → notifier
+        if ($user->date_derniere_connexion == null) {
+            $authServiceUrl = config('services.services_notifications.url');
+
+            $httpClient = new InternalHttpClient();
+            $httpClient->post(
+                $request,
+                $authServiceUrl,
+                'api/notifications/welcome',
+                ['id' => $user->id],
+                ['read:users']
+            );
+        }
+
         $token = $user->createToken('API Token')->plainTextToken;
 
         $user->date_derniere_connexion = now();
@@ -233,9 +270,9 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Connexion réussie.',
             // 'user'    => $user,
-            'status'  => 200,
+            'status' => 200,
             'token_type' => 'Bearer',
-            'token'   => $token
+            'token' => $token
         ], 200);
     }
 
@@ -361,7 +398,8 @@ class AuthController extends Controller
             'code' => 'required|string|size:6',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::on('mysql_sandbox')->where('email', $request->email)->first();
+        $user2 = User::on('mysql_prod')->where('email', $request->email)->first();
 
         if (!$user || $user->verification_code != $request->code) {
             return response()->json([
@@ -374,6 +412,16 @@ class AuthController extends Controller
         $user->verification_code = null;
         $user->email_verified_at = now();
         $user->save();
+
+        $user2->verification_code = null;
+        $user2->email_verified_at = now();
+        $user2->save();
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -460,17 +508,27 @@ class AuthController extends Controller
             'email' => 'required|email',
         ], [
             'email.required' => "L'adresse email est obligatoire.",
-            'email.email'    => "Le format de l'adresse email est invalide."
+            'email.email' => "Le format de l'adresse email est invalide."
         ]);
 
-        $user = User::where('email', $request->input('email'))->first();
+        $user = User::on('mysql_sandbox')->where('email', $request->input('email'))->first();
+        $user2 = User::on('mysql_prod')->where('email', $request->input('email'))->first();
 
         if ($user) {
             $user->email = $request->email;
             $user->verification_code = Str::random(6);
             $user->save();
 
-            // $user->notify(new VerificationCode($user->verification_code));
+            $user2->email = $request->email;
+            $user2->verification_code = Str::random(6);
+            $user2->save();
+
+            $authServiceUrl = config('services.services_notifications.url');
+            $httpClient = new InternalHttpClient();
+            $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', [
+                'id' => $user->id,
+                'data' => $user
+            ], ['read:users']);
 
             return response()->json([
                 "message" => "Un lien de réinitialisation vous a été envoyé.",
@@ -547,7 +605,8 @@ class AuthController extends Controller
             'password' => 'required|min:8'
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::on('mysql_sandbox')->where('email', $request->email)->first();
+        $user2 = User::on('mysql_prod')->where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
@@ -559,6 +618,17 @@ class AuthController extends Controller
         $user->forceFill([
             'password' => Hash::make($request->password)
         ])->save();
+
+        $user2->forceFill([
+            'password' => Hash::make($request->password)
+        ])->save();
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
+
 
         return response()->json(["statut" => 200, 'message' => 'Your password has been reset.'], 200);
     }
@@ -628,6 +698,20 @@ class AuthController extends Controller
 
         $user->password = Hash::make($request->new_password);
         $user->save();
+
+        // 🔹 MAJ dans la deuxième BD
+        $userDb2 = User::on('mysql_prod')->find($user->id);
+        if ($userDb2) {
+            $userDb2->password = $request->new_password;
+            $userDb2->save();
+        }
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
+
 
         return response()->json(['statut' => 200, 'code' => 'PASS_CHANGED_SUCCESS', 'message' => 'Votre mot de passe a été changé avec succès.'], 200);
     }
