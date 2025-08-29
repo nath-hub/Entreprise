@@ -3,8 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-
-use App\Traits\MultiDatabaseTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,7 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, MultiDatabaseTrait;
+    use HasApiTokens, HasFactory, Notifiable;
 
     public $incrementing = false;
 
@@ -61,22 +59,13 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-
-    // Définir dynamiquement la connexion au 2 bd
-    public function setConnection($connection)
-    {
-        $this->connection = $connection;
-        return $this;
-    }
-
-
     public function company()
     {
-        return $this->HasMany(Entreprise::class)->on($this->getDatabaseConnection($this));
+        return $this->HasMany(Entreprise::class);
     }
 
-    public function isSuperadmin(): bool
-    {
+
+    public function isSuperadmin(): bool{
         return $this->role === 'super_admin';
     }
 }

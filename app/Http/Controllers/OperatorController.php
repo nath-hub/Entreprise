@@ -4,14 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Operator;
-use App\Models\User;
-use App\Traits\MultiDatabaseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class OperatorController extends Controller
 {
-    use MultiDatabaseTrait;
 
     /**
      * @OA\Get(
@@ -57,9 +54,13 @@ class OperatorController extends Controller
      */
     public function index()
     {
-        $connection = $this->getDatabaseConnection();
+        $user = auth()->user();
 
-        return Operator::on($connection)->with('country')->get();
+        if ($user->role !== 'super_admin') {
+            return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        return Operator::with('country')->get();
     }
 
     /**
@@ -144,19 +145,12 @@ class OperatorController extends Controller
             'code' => 'required|string|max:20',
             'country_id' => 'required|exists:countries,id',
             'api_endpoint' => 'nullable|string|max:255',
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
+            'commission_rate' => 'nullable|numeric|min:0|max:1',
             'is_active' => 'boolean',
         ]);
 
-        $operator = $this->executeOnBothDatabases(function ($connection, $data) {
-            $operator = new Operator();
-            $operator->setConnection($connection);
-            $operator->fill($data);
-            $operator->save();
-            return $operator;
-        }, $validated);
-
-        $operator = (object) $operator;
+        $validated['id'] = (string) Str::uuid();
+        $operator = Operator::create($validated);
 
         return response()->json($operator, 201);
     }
@@ -206,9 +200,14 @@ class OperatorController extends Controller
      */
     public function show($id)
     {
-        $connection = $this->getDatabaseConnection();
 
-        $operator = Operator::on($connection)->with('country')->find($id);
+        $user = auth()->user();
+
+        if ($user->role !== 'super_admin') {
+            return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        $operator = Operator::with('country')->find($id);
 
         if (!$operator) {
             return response()->json(['message' => 'Opérateur introuvable'], 404);
@@ -218,11 +217,11 @@ class OperatorController extends Controller
     }
 
 
-    /**
+        /**
      * @OA\Get(
      *     path="/api/operators/code/{code}",
      *     tags={"Operators"},
-     *     summary="Voir un opérateur via son code",
+     *     summary="Voir un opérateur via son code", 
      *     @OA\Parameter(name="code", in="path", required=true, @OA\Schema(type="string")),
      *     @OA\Response(response=200, description="Détails de l'opérateur"),
      *     @OA\Response(
@@ -262,9 +261,8 @@ class OperatorController extends Controller
      */
     public function showCountryByCode($code)
     {
-        $connection = $this->getDatabaseConnection();
 
-        $operator = Operator::on($connection)->with('country')->where('code', $code)->where('is_active', true)->first();
+        $operator = Operator::with('country')->where('code', $code)->where('is_active', true)->first();
 
         if (!$operator) {
             return response()->json(['message' => 'Opérateur introuvable'], 404);
@@ -344,16 +342,14 @@ class OperatorController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $connection = $this->getDatabaseConnection();
-        $userId = auth()->id(); // id de l’utilisateur connecté dans la session/token
 
-        $user = User::on($connection)->find($userId);
+        $user = auth()->user();
 
         if ($user->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $operator = Operator::on($connection)->find($id);
+        $operator = Operator::find($id);
 
         if (!$operator) {
             return response()->json(['message' => 'Opérateur introuvable'], 404);
@@ -418,16 +414,13 @@ class OperatorController extends Controller
      */
     public function destroy($id)
     {
-        $connection = $this->getDatabaseConnection();
-        $userId = auth()->id(); // id de l’utilisateur connecté dans la session/token
-
-        $user = User::on($connection)->find($userId);
+        $user = auth()->user();
 
         if ($user->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $operator = Operator::on($connection)->find($id);
+        $operator = Operator::find($id);
 
         if (!$operator) {
             return response()->json(['message' => 'Opérateur introuvable'], 404);
