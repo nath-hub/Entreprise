@@ -8,12 +8,6 @@
         },
         "version": "1.0.0"
     },
-    "servers": [
-        {
-            "url": "http://localhost:8001",
-            "description": "User Service Server"
-        }
-    ],
     "paths": {
         "/api/register": {
             "post": {
@@ -1798,6 +1792,148 @@
                 ]
             }
         },
+        "/api/countries/code/{code}": {
+            "get": {
+                "tags": [
+                    "Pays"
+                ],
+                "summary": "Afficher un pays par CODE",
+                "description": "Retourne les informations d'un pays spécifique. Accessible uniquement au super_admin.",
+                "operationId": "showCountryByCode",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "ID du pays à afficher",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "dkfjfoisofoikvfgvrr"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du pays",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "CM"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Cameroun"
+                                        },
+                                        "currency_code": {
+                                            "type": "string",
+                                            "example": "XAF"
+                                        },
+                                        "currency_symbol": {
+                                            "type": "string",
+                                            "example": "FCFA"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-07-15T14:25:00Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-07-15T14:25:00Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Requête invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Requête invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSION_DENIED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pays introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pays introuvable"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/permissions/assign": {
             "post": {
                 "tags": [
@@ -3239,6 +3375,135 @@
                 ]
             }
         },
+        "/api/entreprises/update/status/{id}": {
+            "post": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Modifier une entreprises",
+                "description": "Met à jour le status d’une entreprises. Les données sont envoyées en multipart/form-data.",
+                "operationId": "c69a84d5d2ee68224ef53e60c56471b2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'utilisateur à modifier",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "en_attente",
+                                            "approuve",
+                                            "rejete"
+                                        ],
+                                        "example": "rejete"
+                                    },
+                                    "motif_statut": {
+                                        "type": "string",
+                                        "example": "Donnees mal renseigner"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Entreprises mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprises mis à jour avec succès."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données envoyées ne sont pas valides."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/operators": {
             "get": {
                 "tags": [
@@ -3343,7 +3608,9 @@
                                 "required": [
                                     "name",
                                     "code",
-                                    "country_id"
+                                    "country_id",
+                                    "commission_rate",
+                                    "is_active"
                                 ],
                                 "properties": {
                                     "name": {
@@ -3352,15 +3619,14 @@
                                     "code": {
                                         "type": "string"
                                     },
-                                    "country_id": {
-                                        "type": "integer"
+                                    "country_code": {
+                                        "type": "string"
                                     },
                                     "api_endpoint": {
                                         "type": "string"
                                     },
                                     "commission_rate": {
-                                        "type": "number",
-                                        "format": "float"
+                                        "type": "number"
                                     },
                                     "is_active": {
                                         "type": "boolean"
@@ -3834,6 +4100,102 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/operators/code/{code}": {
+            "get": {
+                "tags": [
+                    "Operators"
+                ],
+                "summary": "Voir un opérateur via son code",
+                "operationId": "b7921de89539c8e4228770d641a25ae8",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de l'opérateur"
+                    },
+                    "400": {
+                        "description": "Requête invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Requête invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "PERMISSION_DENIED"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ressource non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ressource non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/users": {
@@ -4476,6 +4838,133 @@
                                         "code": {
                                             "type": "integer",
                                             "example": 401
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/update/status/{id}": {
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Modifier un utilisateur",
+                "description": "Met à jour le status d’un utilisateur. Les données sont envoyées en multipart/form-data.",
+                "operationId": "fac05c7485f1a9bf3fec8925dd3a5122",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'utilisateur à modifier",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "actif",
+                                            "inactif",
+                                            "suspendu",
+                                            "bloque",
+                                            "en_attente_verification"
+                                        ],
+                                        "example": "fr"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "succès"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur mis à jour avec succès."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données envoyées ne sont pas valides."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
                                         },
                                         "message": {
                                             "type": "string",

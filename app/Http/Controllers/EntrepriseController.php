@@ -171,10 +171,8 @@ class EntrepriseController extends Controller
 
                 $path = $file->store('entreprises_docs/' . $entreprise->id, 'public');
 
-                $fichierData[$dbUrlColumn] = $path;
-
-                $path = $file->store('entreprises_docs/' . $entreprise->id, 'public');
-                $fichierData[$dbUrlColumn] = Storage::disk('public')->url($path);
+                // Store the full URL instead of just the path
+                $fichierData[$dbUrlColumn] = asset('storage/' . $path);
             }
         }
 
@@ -267,12 +265,8 @@ class EntrepriseController extends Controller
     public function show($id)
     {
         try {
-            $entreprise = Entreprise::with('fichiers', 'user')->findOrFail($id);
-
-            // La policy 'view' est déjà appliquée via authorizeResource
-            if ($this->authorize('view', $entreprise)) {
-                return response()->json($entreprise, 200);
-            }
+            $entreprise = Entreprise::findOrFail($id);
+            return response()->json($entreprise, 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Entreprise introuvable.',
@@ -285,50 +279,49 @@ class EntrepriseController extends Controller
 
 
     /**
-    * @OA\Get(
-    *     path="/api/entreprises/me/company",
-    *     tags={"Entreprises"},
-    *     summary="Afficher les détails d'une entreprise",
-    *     description="Récupère une entreprise avec ses fichiers et son utilisateur",
-    *     operationId="showEntrepriseByToken",
-    *     security={{"bearerAuth":{}}},
-    *     @OA\Response(
-    *         response=200,
-    *         description="Entreprise trouvée",
-    *         @OA\JsonContent(
-    *             @OA\Property(property="entreprise", type="object")
-    *         )
-    *     ),
-
-    *       @OA\Response(
-    *         response=404,
-    *         description="Entreprise introuvable",
-    *         @OA\JsonContent(
-    *             @OA\Property(property="message", type="string", example="Entreprise introuvable."),
-    *             @OA\Property(property="code", type="string", example="ENT_NOT_FOUND"),
-    *             @OA\Property(property="field", type="string", example="id")
-    *         )
-    *     ),
-    *     @OA\Response(
-    *         response=401,
-    *         description="Non authentifié",
-    *         @OA\JsonContent(
-    *             @OA\Property(property="message", type="string", example="Non authentifié."),
-    *             @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-    *             @OA\Property(property="status", type="number", example="401")
-    *         )
-    *     ),
-    *        @OA\Response(
-    *         response=403,
-    *         description="Accès refusé",
-    *         @OA\JsonContent(
-    *             @OA\Property(property="message", type="string", example="Accès non autorisé"),
-    *             @OA\Property(property="code", type="string", example="FORBIDDEN"),
-    *             @OA\Property(property="status", type="number", example="403")
-    *         )
-    *     )
-    * )
-    */
+     * @OA\Get(
+     *     path="/api/entreprises/me/company",
+     *     tags={"Entreprises"},
+     *     summary="Afficher les détails d'une entreprise",
+     *     description="Récupère une entreprise avec ses fichiers et son utilisateur",
+     *     operationId="showEntrepriseByToken",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Entreprise trouvée",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="entreprise", type="object")
+     *         )
+     *     ),
+     *       @OA\Response(
+     *         response=404,
+     *         description="Entreprise introuvable",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Entreprise introuvable."),
+     *             @OA\Property(property="code", type="string", example="ENT_NOT_FOUND"),
+     *             @OA\Property(property="field", type="string", example="id")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Non authentifié."),
+     *             @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *             @OA\Property(property="status", type="number", example="401")
+     *         )
+     *     ),
+     *        @OA\Response(
+     *         response=403,
+     *         description="Accès refusé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Accès non autorisé"),
+     *             @OA\Property(property="code", type="string", example="FORBIDDEN"),
+     *             @OA\Property(property="status", type="number", example="403")
+     *         )
+     *     )
+     * )
+     */
 
     public function showByToken()
     {
@@ -342,7 +335,6 @@ class EntrepriseController extends Controller
             if ($this->authorize('view', $entreprise)) {
                 return response()->json($entreprise, 200);
             }
-
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Entreprise introuvable.',
@@ -509,7 +501,7 @@ class EntrepriseController extends Controller
                         "entreprises_docs/{$entreprise->id}",
                         'public'
                     );
-                    $fileUpdates[$dbField] = Storage::url($path);
+                    $fileUpdates[$dbField] = asset('storage/' . $path);
                 }
             }
 
@@ -643,7 +635,7 @@ class EntrepriseController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/update/status/{id}",
+     *     path="/api/entreprises/update/status/{id}",
      *     tags={"Entreprises"},
      *     summary="Modifier une entreprises",
      *     description="Met à jour le status d’une entreprises. Les données sont envoyées en multipart/form-data.",
@@ -667,11 +659,8 @@ class EntrepriseController extends Controller
      *                     property="status",
      *                     type="string",
      *                     enum={"en_attente", "approuve", "rejete"},
-     *                     example="fr"
+     *                     example="rejete"
      *                 ),
-     *             ),
-     *             @OA\Schema(
-     *                 type="object",
      *                 @OA\Property(
      *                     property="motif_statut",
      *                     type="string",
@@ -727,24 +716,74 @@ class EntrepriseController extends Controller
             'motif_statut' => 'nullable|string|max:255',
         ]);
 
-        $entreprise = Entreprise::findOrFail($id);
-        $entreprise->update(['statut_kyb' => $request->input('status'), 'motif_statut' => $request->input('motif_statut')]);
+        $entrepriseSandbox = Entreprise::on('mysql_sandbox')->with('fichiers')->find($id);
 
-        FichierEntreprise::where('entreprise_id', $id)->update(['statut_fichier' => $request->input('status')]);
+        $entrepriseProd = Entreprise::on('mysql_prod')->with('fichiers')->find($id);
+
+        if ($entrepriseSandbox) {
+            $entrepriseProdMatch = Entreprise::on('mysql_prod')
+                ->where('nom_entreprise', $entrepriseSandbox->nom_entreprise)
+                ->first();
+
+            if ($entrepriseProdMatch) {
+                $entrepriseProdMatch->update([
+                    'statut_kyb' => $request->input('status'),
+                    'motif_statut' => $request->input('motif_statut'),
+                ]);
+
+                $entrepriseProdMatch->fichiers()->update([
+                    'statut_fichier' => $request->input('status'),
+                ]);
+            }
+
+            $entrepriseSandbox->update([
+                'statut_kyb' => $request->input('status'),
+                'motif_statut' => $request->input('motif_statut'),
+            ]);
+
+            $entrepriseSandbox->fichiers()->update([
+                'statut_fichier' => $request->input('status'),
+            ]);
+        } elseif ($entrepriseProd) {
+            $entrepriseSandboxMatch = Entreprise::on('mysql_sandbox')
+                ->where('nom_entreprise', $entrepriseProd->nom_entreprise)
+                ->first();
+
+            if ($entrepriseSandboxMatch) {
+                $entrepriseSandboxMatch->update([
+                    'statut_kyb' => $request->input('status'),
+                    'motif_statut' => $request->input('motif_statut'),
+                ]);
+
+                $entrepriseSandboxMatch->fichiers()->update([
+                    'statut_fichier' => $request->input('status'),
+                ]);
+            }
+
+            $entrepriseProd->update([
+                'statut_kyb' => $request->input('status'),
+                'motif_statut' => $request->input('motif_statut'),
+            ]);
+
+            $entrepriseProd->fichiers()->update([
+                'statut_fichier' => $request->input('status'),
+            ]);
+        } else {
+            return response()->json(['message' => 'Entreprise non trouvée'], 404);
+        }
 
         $authServiceUrl = config('services.services_notifications.url');
         $httpClient = new InternalHttpClient();
-        $httpClient->post($request, $authServiceUrl, 'api/send-verification-code', [
+        $httpClient->post($request, $authServiceUrl, 'api/merchant-kyc-validation', [
             'id' => $user->id,
-            'entreprise' => $entreprise
+            'data' => [$entrepriseSandbox]
         ], ['read:users']);
 
         return response()->json([
             'code' => 200,
             'status' => 'succès',
             'message' => 'Entreprise mis à jour avec succès.',
-            'data' => $user
+            'data' => $entrepriseSandbox
         ]);
     }
-
 }

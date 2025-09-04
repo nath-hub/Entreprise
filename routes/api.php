@@ -57,14 +57,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-Route::prefix('entreprises/')->middleware('auth:sanctum')->group(function () {
-    Route::get('', [EntrepriseController::class, 'index']);
-    Route::post('', [EntrepriseController::class, 'store']);
+Route::prefix('entreprises/')->group(function () {
+    Route::get('', [EntrepriseController::class, 'index'])->middleware('auth:sanctum');
+    Route::post('', [EntrepriseController::class, 'store'])->middleware('auth:sanctum');
     Route::get('{id}', [EntrepriseController::class, 'show']);
-    Route::get('me/company', [EntrepriseController::class, 'showByToken']);
-    Route::post('{id}', [EntrepriseController::class, 'update']);
-    Route::post('update/status/{id}', [EntrepriseController::class, 'updateStatus']);
-    Route::delete('{id}', [EntrepriseController::class, 'destroy']);
+    Route::get('me/company', [EntrepriseController::class, 'showByToken'])->middleware('auth:sanctum');
+    Route::post('{id}', [EntrepriseController::class, 'update'])->middleware('auth:sanctum');
+    Route::post('update/status/{id}', [EntrepriseController::class, 'updateStatus'])->middleware('auth:sanctum');
+    Route::delete('{id}', [EntrepriseController::class, 'destroy'])->middleware('auth:sanctum');
 });
 
 

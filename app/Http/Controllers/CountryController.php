@@ -75,8 +75,8 @@ class CountryController extends Controller
 
     public function index()
     {
-       auth()->user();
- 
+        auth()->user();
+
         return Country::all();
     }
 
@@ -151,7 +151,7 @@ class CountryController extends Controller
 
     public function show($id)
     {
-       
+
         $country = Country::find($id);
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
@@ -160,7 +160,7 @@ class CountryController extends Controller
     }
 
 
-        /**
+    /**
      * @OA\Get(
      *     path="/api/countries/code/{code}",
      *     summary="Afficher un pays par CODE",
@@ -230,7 +230,7 @@ class CountryController extends Controller
 
     public function showCountryByCode($code)
     {
-       
+
         $country = Country::where('code', $code)->where('is_active', true)->first();
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
@@ -339,9 +339,13 @@ class CountryController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $country = Country::create($validated);
+        // Créer le pays dans mysql_sandbox
+        $countrySandbox = Country::on('mysql_sandbox')->create($validated);
 
-        return response()->json($country, 201);
+        // Créer le pays dans mysql_prod
+        $countryProd = Country::on('mysql_prod')->create($validated);
+
+        return response()->json($countrySandbox, 201);
     }
 
     /**
@@ -398,7 +402,7 @@ class CountryController extends Controller
      *             @OA\Property(property="updated_at", type="string", format="date-time")
      *         )
      *     ),
-        *     @OA\Response(
+     *     @OA\Response(
      *         response=400,
      *         description="Requête invalide",
      *         @OA\JsonContent(
@@ -527,12 +531,33 @@ class CountryController extends Controller
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $country = Country::find($id);
-        if (!$country) {
+        $countrySandbox = Country::on('mysql_sandbox')->find($id);
+
+        $countryProd = Country::on('mysql_prod')->find($id);
+
+        if ($countrySandbox) {
+            $countryProdMatch = Country::on('mysql_prod')
+                ->where('code', $countrySandbox->code)
+                ->first();
+
+            if ($countryProdMatch) {
+                $countryProdMatch->delete();
+            }
+
+            $countrySandbox->delete();
+        } elseif ($countryProd) {
+            $countrySandboxMatch = Country::on('mysql_sandbox')
+                ->where('code', $countryProd->code)
+                ->first();
+
+            if ($countrySandboxMatch) {
+                $countrySandboxMatch->delete();
+            }
+
+            $countryProd->delete();
+        } else {
             return response()->json(['message' => 'Pays introuvable'], 404);
         }
-
-        $country->delete();
 
         return response()->json(['message' => 'Pays supprimé avec succès']);
     }
