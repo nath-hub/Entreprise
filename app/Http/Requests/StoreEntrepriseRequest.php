@@ -43,7 +43,7 @@ class StoreEntrepriseRequest extends FormRequest
             'numero_tva_intracommunautaire' => 'nullable|string|unique:entreprises,numero_tva_intracommunautaire',
             'capital_social'                => 'nullable|string|max:255', 
             'annee_creation_entreprise' => 'nullable|integer|min:1900|max:'.(date('Y') + 1),
-            'statut_kyb'                 => 'in:en_attente,approuve,rejete,en_revision', // Défini par défaut à 'en_attente'
+
             'motif_statut'               => 'nullable|string',
 
             'rccm_file'                 => 'nullable|file|mimes:pdf,jpg,png|max:10240', // 10MB

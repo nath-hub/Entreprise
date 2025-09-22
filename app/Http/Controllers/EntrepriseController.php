@@ -68,7 +68,6 @@ class EntrepriseController extends Controller
      *                 @OA\Property(property="numero_tva_intracommunautaire", type="string", nullable=true),
      *                 @OA\Property(property="capital_social", type="string", maxLength=255, nullable=true),
      *                 @OA\Property(property="annee_creation_entreprise", type="integer", minimum=1900, maximum=2100, nullable=true),
-     *                 @OA\Property(property="statut_kyb", type="string", enum={"en_attente","approuve","rejete","en_revision"}, example="en_attente"),
      *                 @OA\Property(property="motif_statut", type="string", nullable=true),
 
      *                 @OA\Property(property="rccm_file", type="string", format="binary", nullable=true),

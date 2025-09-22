@@ -615,7 +615,7 @@
                 ],
                 "summary": "Vérifier le code de confirmation",
                 "description": "Vérifie le code de vérification envoyé à l'adresse email de l'utilisateur et active son compte.",
-                "operationId": "6b62f44eede6891076a8e30a293d4f86",
+                "operationId": "9fedd0894fb6816cfea3e9a5eaf3b7f3",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -744,6 +744,118 @@
                                         "status": {
                                             "type": "string",
                                             "example": "erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/password/reset": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Demander une réinitialisation de mot de passe",
+                "description": "Envoie un e-mail avec un lien pour réinitialiser le mot de passe de l'utilisateur.",
+                "operationId": "71a6bdcb2b558ba532a266b281f59218",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "utilisateur@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "E-mail de réinitialisation envoyé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Un e-mail de réinitialisation a été envoyé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun utilisateur trouvé avec cet e-mail."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L’email est obligatoire."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 500
                                         },
                                         "message": {
                                             "type": "string",
@@ -2522,16 +2634,6 @@
                                         "maximum": 2100,
                                         "minimum": 1900,
                                         "nullable": true
-                                    },
-                                    "statut_kyb": {
-                                        "type": "string",
-                                        "enum": [
-                                            "en_attente",
-                                            "approuve",
-                                            "rejete",
-                                            "en_revision"
-                                        ],
-                                        "example": "en_attente"
                                     },
                                     "motif_statut": {
                                         "type": "string",

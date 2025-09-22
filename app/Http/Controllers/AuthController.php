@@ -389,54 +389,6 @@ class AuthController extends Controller
     }
 
 
-    // ✅ RESET PASSWORD
-
-    public function verifyCode(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|string|email',
-            'code' => 'required|string|size:6',
-        ]);
-
-        $user = User::on('mysql_sandbox')->where('email', $request->email)->first();
-        $user2 = User::on('mysql_prod')->where('email', $request->email)->first();
-
-        if (!$user || $user->verification_code != $request->code) {
-            return response()->json([
-                'status' => 401,
-                'code' => 'INVALID_VERIFICATION_CODE',
-                'message' => 'code de verification invalide'
-            ], 401);
-        }
-
-        $user->verification_code = null;
-        $user->email_verified_at = now();
-        $user->save();
-
-        $user2->verification_code = null;
-        $user2->email_verified_at = now();
-        $user2->save();
-
-        $authServiceUrl = config('services.services_notifications.url');
-
-        $httpClient = new InternalHttpClient();
-
-        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Compte verifier avec succes',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'role' => $user->role,
-        ]);
-    }
-
-
     /**
      * @OA\Post(
      *     path="/api/verify_code",
@@ -496,6 +448,108 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="code", type="integer", example=500),
      *             @OA\Property(property="status", type="string", example="erreur serveur"),
+     *             @OA\Property(property="message", type="string", example="Une erreur est survenue.")
+     *         )
+     *     )
+     * )
+     */
+
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $user = User::on('mysql_sandbox')->where('email', $request->email)->first();
+        $user2 = User::on('mysql_prod')->where('email', $request->email)->first();
+
+        if (!$user || $user->verification_code != $request->code) {
+            return response()->json([
+                'status' => 401,
+                'code' => 'INVALID_VERIFICATION_CODE',
+                'message' => 'code de verification invalide'
+            ], 401);
+        }
+
+        $user->verification_code = null;
+        $user->email_verified_at = now();
+        $user->save();
+
+        $user2->verification_code = null;
+        $user2->email_verified_at = now();
+        $user2->save();
+
+        $authServiceUrl = config('services.services_notifications.url');
+
+        $httpClient = new InternalHttpClient();
+
+        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Compte verifier avec succes',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'role' => $user->role,
+        ]);
+    }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/password/reset",
+     *     tags={"Authentification"},
+     *     summary="Demander une réinitialisation de mot de passe",
+     *     description="Envoie un e-mail avec un lien pour réinitialiser le mot de passe de l'utilisateur.",
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 required={"email"},
+     *                 @OA\Property(property="email", type="string", format="email", example="utilisateur@example.com")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="E-mail de réinitialisation envoyé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=200),
+     *             @OA\Property(property="message", type="string", example="Un e-mail de réinitialisation a été envoyé.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Utilisateur non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=404),
+     *             @OA\Property(property="message", type="string", example="Aucun utilisateur trouvé avec cet e-mail.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=422),
+     *             @OA\Property(property="message", type="string", example="L’email est obligatoire.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=500),
      *             @OA\Property(property="message", type="string", example="Une erreur est survenue.")
      *         )
      *     )
