@@ -711,11 +711,13 @@ class EntrepriseController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $user = $request->user();
+        $admin = $request->user();
 
-        if ($user && $user->role !== 'super_admin') {
+        if ($admin && $admin->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
+
+        $user = User::where('id', $id)->first();
 
         $request->validate([
             'status' => 'required|in:en_attente,approuve,rejete',
@@ -847,11 +849,13 @@ class EntrepriseController extends Controller
     public function activate(Request $request, $id)
     {
 
-        $user = auth()->user();
+        $admin = auth()->user();
 
-        if ($user->role !== 'super_admin') {
+        if ($admin->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
+
+        $user = User::where('id', $id)->first();
 
         $request->validate([
             'status' => 'required|in:approuve,en_attente,rejete',
