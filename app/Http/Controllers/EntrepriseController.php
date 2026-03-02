@@ -637,7 +637,7 @@ class EntrepriseController extends Controller
      *     path="/api/entreprises/update/status/{id}",
      *     tags={"Entreprises"},
      *     summary="Modifier une entreprises",
-     *     description="Met à jour le status d’une entreprises. Les données sont envoyées en multipart/form-data.",
+     *     description="Met à jour le status d’une entreprises.",
      *     security={{"bearerAuth":{}}},
      *
      *     @OA\Parameter(
@@ -648,24 +648,33 @@ class EntrepriseController extends Controller
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *
-     * @OA\RequestBody(
-     *  required=true,
-     * @OA\JsonContent(
-     * required={"status"},
-     *   @OA\Property(
-     *        property="status",
-     *          type="string",
-     *          enum={"en_attente","approuve","rejete"},
-     *          example="rejete",
-     *          description="Valeurs possibles: approuve, en_attente, rejete"
-     *    ),
-     *    @OA\Property(
-     *        property="motif_statut",
-     *        type="string",
-     *        example="Donnees mal renseigner"
-     *    )
-     *)
-     *),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="string",
+     *                 enum={"approuve", "en_attente", "rejete"},
+     *                 example="approuve"
+     *             ),
+     *             @OA\Property(
+     *                 property="motif_statut",
+     *                 type="string",
+     *                 example="Donnees mal renseigner"
+     *             )
+     *         ),
+     *         @OA\Examples(
+     *             example="Approuve",
+     *             summary="Entreprise approuvée",
+     *             value={"status":"approuve","motif_statut":"Valide"}
+     *         ),
+     *         @OA\Examples(
+     *             example="Rejete",
+     *             summary="Entreprise rejetée",
+     *             value={"status":"rejete","motif_statut":"Donnees incorrectes"}
+     *         )
+     *     ),
      *
      *     @OA\Response(
      *         response=200,
@@ -806,7 +815,7 @@ class EntrepriseController extends Controller
      *                     property="status",
      *                     type="string",
      *                     enum={"approuve", "en_attente", "rejete"},
-     *                     example="rejete"
+     *                     example="rejete",
      *                     description="Valeurs possibles: approuve, en_attente, rejete"
      *                 ),
      *         )

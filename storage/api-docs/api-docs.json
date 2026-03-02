@@ -3483,7 +3483,7 @@
                     "Entreprises"
                 ],
                 "summary": "Modifier une entreprises",
-                "description": "Met à jour le status d’une entreprises. Les données sont envoyées en multipart/form-data.",
+                "description": "Met à jour le status d’une entreprises.",
                 "operationId": "c69a84d5d2ee68224ef53e60c56471b2",
                 "parameters": [
                     {
@@ -3509,11 +3509,11 @@
                                     "status": {
                                         "type": "string",
                                         "enum": [
-                                            "en_attente",
                                             "approuve",
+                                            "en_attente",
                                             "rejete"
                                         ],
-                                        "example": "rejete"
+                                        "example": "approuve"
                                     },
                                     "motif_statut": {
                                         "type": "string",
@@ -3638,6 +3638,7 @@
                                 ],
                                 "properties": {
                                     "status": {
+                                        "description": "Valeurs possibles: approuve, en_attente, rejete",
                                         "type": "string",
                                         "enum": [
                                             "approuve",
