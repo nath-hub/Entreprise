@@ -44,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::put('/update/status/{id}', [UserController::class, 'updateStatus']);
+    Route::post('/update/status/{id}', [UserController::class, 'updateStatus']);
 
 
     // Permissions
@@ -64,6 +64,7 @@ Route::prefix('entreprises/')->group(function () {
     Route::get('me/company', [EntrepriseController::class, 'showByToken'])->middleware('auth:sanctum');
     Route::post('{id}', [EntrepriseController::class, 'update'])->middleware('auth:sanctum');
     Route::post('update/status/{id}', [EntrepriseController::class, 'updateStatus'])->middleware('auth:sanctum');
+    Route::post('{id}/activate', [EntrepriseController::class, 'activate'])->middleware('auth:sanctum');
     Route::delete('{id}', [EntrepriseController::class, 'destroy'])->middleware('auth:sanctum');
 });
 
@@ -73,8 +74,8 @@ Route::prefix('countries/')->group(function () {
     Route::post('', [CountryController::class, 'store'])->middleware('auth:sanctum');
     Route::get('{id}', [CountryController::class, 'show']);
     Route::get('code/{code}', [CountryController::class, 'showCountryByCode']);
-    Route::post('{id}', [CountryController::class, 'update']);
-    Route::delete('{id}', [CountryController::class, 'destroy']);
+    Route::post('{id}', [CountryController::class, 'update'])->middleware('auth:sanctum');
+    Route::delete('{id}', [CountryController::class, 'destroy'])->middleware('auth:sanctum');
 });
 
 
@@ -83,8 +84,8 @@ Route::prefix('operators/')->group(function () {
     Route::post('', [OperatorController::class, 'store'])->middleware('auth:sanctum');
     Route::get('{id}', [OperatorController::class, 'show']);
     Route::get('code/{code}', [OperatorController::class, 'showCountryByCode']);
-    Route::post('{id}', [OperatorController::class, 'update']);
-    Route::delete('{id}', [OperatorController::class, 'destroy']);
+    Route::post('{id}', [OperatorController::class, 'update'])->middleware('auth:sanctum');
+    Route::delete('{id}', [OperatorController::class, 'destroy'])->middleware('auth:sanctum');
 });
 
 // Route::apiResource('countries', CountryController::class)->middleware('auth:sanctum');

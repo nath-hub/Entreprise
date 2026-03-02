@@ -393,7 +393,7 @@ class UserController extends Controller
 
 
     /**
-     * @OA\Put(
+     * @OA\Post(
      *     path="/api/update/status/{id}",
      *     tags={"Utilisateurs"},
      *     summary="Modifier un utilisateur",
@@ -467,11 +467,11 @@ class UserController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:actif,inactif,suspendu,bloque,en_attente_verification',
+            'status' => 'required|string|in:actif,inactif,suspendu,bloque,en_attente_verification',
         ]);
 
-        $user = User::findOrFail($id);
-
+        $user = User::findOrFail($id); 
+ 
         $user->update(['statut' => $request->input('status')]);
 
         return response()->json([

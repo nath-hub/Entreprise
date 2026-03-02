@@ -3500,8 +3500,11 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
+                                "required": [
+                                    "status"
+                                ],
                                 "properties": {
                                     "status": {
                                         "type": "string",
@@ -3591,6 +3594,109 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Jeton manquant ou invalide."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/entreprises/{id}/activate": {
+            "post": {
+                "tags": [
+                    "Entreprises"
+                ],
+                "summary": "Activer une entreprise",
+                "description": "Active une entreprise et valide ses fichiers.",
+                "operationId": "f7056e9278614ea6f510b1e79c469fab",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entreprise à activer",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "approuve",
+                                            "en_attente",
+                                            "rejete"
+                                        ],
+                                        "example": "rejete"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Entreprise activée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entreprise mis à jour avec succès."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
                                         }
                                     },
                                     "type": "object"
@@ -3710,7 +3816,7 @@
                                 "required": [
                                     "name",
                                     "code",
-                                    "country_id",
+                                    "country_code",
                                     "commission_rate",
                                     "is_active"
                                 ],
@@ -3746,8 +3852,8 @@
                                     "code": {
                                         "type": "string"
                                     },
-                                    "country_id": {
-                                        "type": "integer"
+                                    "country_code": {
+                                        "type": "string"
                                     },
                                     "api_endpoint": {
                                         "type": "string"
@@ -4960,13 +5066,13 @@
             }
         },
         "/api/update/status/{id}": {
-            "put": {
+            "post": {
                 "tags": [
                     "Utilisateurs"
                 ],
                 "summary": "Modifier un utilisateur",
                 "description": "Met à jour le status d’un utilisateur. Les données sont envoyées en multipart/form-data.",
-                "operationId": "fac05c7485f1a9bf3fec8925dd3a5122",
+                "operationId": "71af746d27f5de10caf5903014870dbf",
                 "parameters": [
                     {
                         "name": "id",

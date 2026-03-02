@@ -328,7 +328,7 @@ class EntrepriseController extends Controller
         $user = auth()->user();
 
         try {
-            $entreprise = Entreprise::with('fichiers', 'user')->where('user_id', $user->id)->firstOrFail();
+            $entreprise = Entreprise::with(['fichiers', 'user:id,name,telephone,permissions,date_derniere_connexion,email,role'])->where('user_id', $user->id)->firstOrFail();
 
 
             if ($this->authorize('view', $entreprise)) {
@@ -648,26 +648,23 @@ class EntrepriseController extends Controller
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="status",
-     *                     type="string",
-     *                     enum={"en_attente", "approuve", "rejete"},
-     *                     example="rejete"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="motif_statut",
-     *                     type="string",
-     *                     example="Donnees mal renseigner"
-     *                 ),
-     *             )
-     *         ),
-     *     ),
+     * @OA\RequestBody(
+     *  required=true,
+     * @OA\JsonContent(
+     * required={"status"},
+     *   @OA\Property(
+     *        property="status",
+     *       type="string",
+     *       enum={"en_attente","approuve","rejete"},
+     *        example="rejete"
+     *    ),
+     *    @OA\Property(
+     *        property="motif_statut",
+     *        type="string",
+     *        example="Donnees mal renseigner"
+     *    )
+     *)
+     *),
      *
      *     @OA\Response(
      *         response=200,
@@ -783,6 +780,92 @@ class EntrepriseController extends Controller
             'status' => 'succès',
             'message' => 'Entreprise mis à jour avec succès.',
             'data' => $entrepriseSandbox
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/entreprises/{id}/activate",
+     *     tags={"Entreprises"},
+     *     summary="Activer une entreprise",
+     *     description="Active une entreprise et valide ses fichiers.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l'entreprise à activer",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *                 @OA\Property(
+     *                     property="status",
+     *                     type="string",
+     *                     enum={"approuve", "en_attente", "rejete"},
+     *                     example="rejete"
+     *                 ),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Entreprise activée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Entreprise mis à jour avec succès."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Non authentifié.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Accès refusé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Accès refusé")
+     *         )
+     *     )
+     * )
+     */
+    public function activate(Request $request, $id)
+    {
+
+        $user = auth()->user();
+
+        if ($user->role !== 'super_admin') {
+            return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:approuve,en_attente,rejete',
+        ]);
+
+        $entreprise = Entreprise::findOrFail($id);
+
+        $entreprise->update(['statut_kyb' => $request->input('status')]);
+
+        $entreprise->fichiers()->update([
+            'statut_fichier' => $request->input('status'),
+        ]);
+
+        $authServiceUrl = config('services.services_notifications.url');
+        $httpClient = new InternalHttpClient();
+        $httpClient->post($request, $authServiceUrl, 'api/merchant-activated', [
+            'id' => $user->id,
+            'data' => [$entreprise]
+        ], ['read:users']);
+
+        return response()->json([
+            'success' => true,
+            'status' => 200,
+            'message' => 'Entreprise activée avec succès.',
+            'data' => $entreprise
         ]);
     }
 }

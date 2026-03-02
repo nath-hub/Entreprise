@@ -331,6 +331,12 @@ class CountryController extends Controller
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
+        if ($request->has('is_active')) {
+            $request->merge([
+                'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
         $validated = $request->validate([
             'code' => 'required|string|size:2|unique:countries,code',
             'name' => 'required|string|max:100',
@@ -449,6 +455,12 @@ class CountryController extends Controller
         $country = Country::find($id);
         if (!$country) {
             return response()->json(['message' => 'Pays introuvable'], 404);
+        }
+
+        if ($request->has('is_active')) {
+            $request->merge([
+                'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+            ]);
         }
 
         $validated = $request->validate([

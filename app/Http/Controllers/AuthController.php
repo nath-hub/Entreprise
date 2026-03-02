@@ -234,7 +234,7 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['success' => false, 'status' => 400,'message' => 'Invalid credentials'], 400);
         }
 
         $user = Auth::user();
@@ -242,8 +242,9 @@ class AuthController extends Controller
         if (is_null($user->email_verified_at)) {
             Auth::logout();
             return response()->json([
+                'success' => false,
                 'message' => 'Veuillez vérifier votre adresse email avant de vous connecter.',
-                'status' => '403',
+                'status' => 403,
                 'field' => 'email_verification'
             ], 403);
         }
@@ -268,6 +269,7 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json([
+            'success' => true,
             'message' => 'Connexion réussie.',
             // 'user'    => $user,
             'status' => 200,
@@ -466,6 +468,7 @@ class AuthController extends Controller
 
         if (!$user || $user->verification_code != $request->code) {
             return response()->json([
+                'success' => false,
                 'status' => 401,
                 'code' => 'INVALID_VERIFICATION_CODE',
                 'message' => 'code de verification invalide'
@@ -480,15 +483,16 @@ class AuthController extends Controller
         $user2->email_verified_at = now();
         $user2->save();
 
-        $authServiceUrl = config('services.services_notifications.url');
+        // $authServiceUrl = config('services.services_notifications.url');
 
-        $httpClient = new InternalHttpClient();
+        // $httpClient = new InternalHttpClient();
 
-        $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
+        // $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'status' => 200,
             'message' => 'Compte verifier avec succes',
             'access_token' => $token,
@@ -585,12 +589,14 @@ class AuthController extends Controller
             ], ['read:users']);
 
             return response()->json([
+                'success' => true,
                 "message" => "Un lien de réinitialisation vous a été envoyé.",
                 "statut" => 200,
                 "code" => "RESET_LINK_SENT",
             ], 200);
         } elseif (is_null($user)) {
             return response()->json([
+                'success' => false,
                 "message" => "Nous ne pouvons pas trouver d'utilisateur avec cette adresse e-mail.",
                 "code" => "USER_NOT_FOUND",
                 "statut" => 404
@@ -598,6 +604,8 @@ class AuthController extends Controller
         }
 
         return response()->json([
+            'success' => false,
+            'statut' => 500,
             "message" => "Impossible d'envoyer le lien de réinitialisation de mot de passe pour le moment. Veuillez réessayer plus tard.",
             "code" => "RESET_LINK_FAILED"
         ], 500);
@@ -664,6 +672,7 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json([
+                "success" => false,
                 "message" => "Nous ne pouvons pas trouver d'utilisateur avec cette adresse e-mail.",
                 "code" => "USER_NOT_FOUND",
                 "statut" => 404
@@ -684,7 +693,7 @@ class AuthController extends Controller
         $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
 
 
-        return response()->json(["statut" => 200, 'message' => 'Your password has been reset.'], 200);
+        return response()->json(['success' => true, 'statut' => 200, 'message' => 'Your password has been reset.'], 200);
     }
 
     /**
@@ -747,7 +756,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         if (!$user || !Hash::check($request->old_password, $user->password)) {
-            return response()->json(['statut' => 403, 'message' => "L'ancien mot de passe est incorrect.", "code" => "PASS_CHANGED_FAILED"], 403);
+            return response()->json(['success' => false, 'statut' => 403, 'message' => "L'ancien mot de passe est incorrect.", "code" => "PASS_CHANGED_FAILED"], 403);
         }
 
         $user->password = Hash::make($request->new_password);
@@ -767,6 +776,6 @@ class AuthController extends Controller
         $httpClient->post($request, $authServiceUrl, 'api/send-password-reset-success', ['id' => $user->id, 'environment' => 'sandbox'], ['read:users']);
 
 
-        return response()->json(['statut' => 200, 'code' => 'PASS_CHANGED_SUCCESS', 'message' => 'Votre mot de passe a été changé avec succès.'], 200);
+        return response()->json(['success' => true, 'statut' => 200, 'code' => 'PASS_CHANGED_SUCCESS', 'message' => 'Votre mot de passe a été changé avec succès.'], 200);
     }
 }

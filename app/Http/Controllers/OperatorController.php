@@ -75,7 +75,7 @@ class OperatorController extends Controller
      *             @OA\MediaType(
      *                 mediaType="multipart/form-data",
      *                 @OA\Schema(
-     *                     required={"name", "code", "country_id", "commission_rate", "is_active"},
+     *                     required={"name", "code", "country_code", "commission_rate", "is_active"},
      *                     @OA\Property(property="name", type="string"),
      *                     @OA\Property(property="code", type="string"),
      *                     @OA\Property(property="country_code", type="string"),
@@ -88,7 +88,7 @@ class OperatorController extends Controller
      *             @OA\Schema(
      *                 @OA\Property(property="name", type="string"),
      *                 @OA\Property(property="code", type="string"),
-     *                 @OA\Property(property="country_id", type="integer"),
+     *                 @OA\Property(property="country_code", type="string"),
      *                 @OA\Property(property="api_endpoint", type="string"),
      *                 @OA\Property(property="commission_rate", type="number"),
      *                 @OA\Property(property="is_active", type="boolean")
@@ -140,21 +140,20 @@ class OperatorController extends Controller
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
+        if ($request->has('is_active')) {
+            $request->merge([
+                'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:50',
             'code' => 'required|string|max:20',
             'country_code' => 'required|string',
             'api_endpoint' => 'nullable|string|max:255',
             'commission_rate' => 'nullable|numeric|min:0|max:1',
-            'is_active' => 'nullable',
+            'is_active' => 'boolean',
         ]);
-
-        // Normaliser is_active pour multipart/form-data
-        if (isset($validated['is_active'])) {
-            $validated['is_active'] = filter_var($validated['is_active'], FILTER_VALIDATE_BOOLEAN);
-        } else {
-            $validated['is_active'] = true; // Valeur par défaut
-        }
 
         // Vérifier manuellement que le country_id existe dans les deux bases
         $countryExistsInSandbox = \App\Models\Country::on('mysql_sandbox')->where('code', $validated['country_code'])->first();
@@ -380,6 +379,12 @@ class OperatorController extends Controller
 
         if ($user->role !== 'super_admin') {
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
+        }
+
+        if ($request->has('is_active')) {
+            $request->merge([
+                'is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)
+            ]);
         }
 
         $validated = $request->validate([
