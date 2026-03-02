@@ -717,7 +717,7 @@ class EntrepriseController extends Controller
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $user = User::where('id', $id)->first();
+       
 
         $request->validate([
             'status' => 'required|in:en_attente,approuve,rejete',
@@ -727,6 +727,8 @@ class EntrepriseController extends Controller
         $entrepriseSandbox = Entreprise::on('mysql_sandbox')->with('fichiers')->find($id);
 
         $entrepriseProd = Entreprise::on('mysql_prod')->with('fichiers')->find($id);
+
+
 
         if ($entrepriseSandbox) {
             $entrepriseProdMatch = Entreprise::on('mysql_prod')
@@ -752,6 +754,8 @@ class EntrepriseController extends Controller
             $entrepriseSandbox->fichiers()->update([
                 'statut_fichier' => $request->input('status'),
             ]);
+
+             $user = User::where('id', $entrepriseSandbox->user_id)->first();
         } elseif ($entrepriseProd) {
             $entrepriseSandboxMatch = Entreprise::on('mysql_sandbox')
                 ->where('nom_entreprise', $entrepriseProd->nom_entreprise)
@@ -776,6 +780,8 @@ class EntrepriseController extends Controller
             $entrepriseProd->fichiers()->update([
                 'statut_fichier' => $request->input('status'),
             ]);
+
+            $user = User::where('id', $entrepriseProd->user_id)->first();
         } else {
             return response()->json(['message' => 'Entreprise non trouvée'], 404);
         }
@@ -855,8 +861,6 @@ class EntrepriseController extends Controller
             return response()->json(['message' => 'Accès refusé', 'status' => 403, 'code' => 'PERMISSION_DENIED'], 403);
         }
 
-        $user = User::where('id', $id)->first();
-
         $request->validate([
             'status' => 'required|in:approuve,en_attente,rejete',
         ]);
@@ -864,6 +868,10 @@ class EntrepriseController extends Controller
         $entreprise = Entreprise::findOrFail($id);
 
         $entreprise->update(['statut_kyb' => $request->input('status')]);
+
+        
+        $user = User::where('id', $entreprise->user_id)->first();
+
 
         $entreprise->fichiers()->update([
             'statut_fichier' => $request->input('status'),
