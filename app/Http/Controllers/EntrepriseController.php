@@ -654,9 +654,10 @@ class EntrepriseController extends Controller
      * required={"status"},
      *   @OA\Property(
      *        property="status",
-     *       type="string",
-     *       enum={"en_attente","approuve","rejete"},
-     *        example="rejete"
+     *          type="string",
+     *          enum={"en_attente","approuve","rejete"},
+     *          example="rejete",
+     *          description="Valeurs possibles: approuve, en_attente, rejete"
      *    ),
      *    @OA\Property(
      *        property="motif_statut",
@@ -806,6 +807,7 @@ class EntrepriseController extends Controller
      *                     type="string",
      *                     enum={"approuve", "en_attente", "rejete"},
      *                     example="rejete"
+     *                     description="Valeurs possibles: approuve, en_attente, rejete"
      *                 ),
      *         )
      *     ),
